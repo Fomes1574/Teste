@@ -2,7 +2,7 @@ import { loadGame, saveGame, parseImportedSave, clearSave } from './systems/save
 import { applyOfflineProgress } from './systems/offline.js';
 import { addSouls, buyMaxProducer, buyProducer, buyUpgrade, clickPower, productionPerSecond } from './systems/economy.js';
 import { maybeStartBloodMoon, BLOOD_MOON_CONFIG } from './systems/events.js';
-import { render, showMessage, spawnFloatingText } from './systems/render.js';
+import { render, renderProducerList, renderProducerStage, renderUpgradeList, showMessage, spawnFloatingText, updateResourceDisplays, updateStatistics, updateWorldVisuals, upgradeVisibilitySignature } from './systems/render.js';
 import { formatNumber } from './utils/format.js';
 import { createDefaultState } from './state.js';
 
@@ -15,11 +15,20 @@ let lastFrame = performance.now();
 let eventAccumulator = 0;
 const $ = id => document.getElementById(id);
 let heroTimer = 0;
+let lastUpgradeVisibility = '';
+let wasBloodMoonActive = false;
 
-function persistAndRender(message) {
+function refreshAfterStructuralChange(message, { producersChanged = false } = {}) {
   if (message) showMessage(message);
   saveGame(state);
-  render(state);
+  updateResourceDisplays(state);
+  updateStatistics(state);
+  updateWorldVisuals(state);
+  renderProducerList(state);
+  renderUpgradeList(state);
+  if (producersChanged) renderProducerStage(state);
+  lastUpgradeVisibility = upgradeVisibilitySignature(state);
+  wasBloodMoonActive = Date.now() < state.bloodMoonUntil;
 }
 
 function flashPurchasedCard(selector) {
@@ -38,7 +47,10 @@ $('ritualButton').addEventListener('click', event => {
   spawnFloatingText(`+${formatNumber(gained)} Alma`, event.clientX, event.clientY);
   setTimeout(() => document.body.classList.remove('ritual-shock'), 260);
   setTimeout(() => $('ritualButton').classList.remove('clicked'), 360);
-  persistAndRender();
+  saveGame(state);
+  updateResourceDisplays(state);
+  updateStatistics(state);
+  updateWorldVisuals(state);
 });
 
 document.querySelectorAll('.tab-button').forEach(button => {
@@ -57,14 +69,14 @@ document.addEventListener('click', event => {
   const upgradeId = action.dataset.buyUpgrade;
   if (producerId) {
     const bought = buyProducer(state, producerId);
-    if (bought) { spawnSoulBurst(); persistAndRender('Produtor invocado. A presença dele agora aparece no cenário.'); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); }
+    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange('Produtor invocado. A presença dele agora aparece no cenário.', { producersChanged: true }); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); }
   }
   if (maxProducerId) {
     const bought = buyMaxProducer(state, maxProducerId);
-    if (bought) { spawnSoulBurst(); persistAndRender(`${bought} produtor(es) invocado(s).`); flashPurchasedCard(`[data-buy-max="${maxProducerId}"]`); }
+    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange(`${bought} produtor(es) invocado(s).`, { producersChanged: true }); flashPurchasedCard(`[data-buy-max="${maxProducerId}"]`); }
   }
   if (upgradeId) {
-    if (buyUpgrade(state, upgradeId)) { spawnSoulBurst(); persistAndRender('Upgrade comprado e aplicado ao ritual.'); flashPurchasedCard(`[data-buy-upgrade="${upgradeId}"]`); }
+    if (buyUpgrade(state, upgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange('Upgrade comprado e aplicado ao ritual.'); flashPurchasedCard(`[data-buy-upgrade="${upgradeId}"]`); }
   }
 });
 
@@ -88,7 +100,7 @@ $('importSave').addEventListener('change', event => {
       return;
     }
     state = imported;
-    persistAndRender('Save importado com sucesso.');
+    refreshAfterStructuralChange('Save importado com sucesso.', { producersChanged: true });
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -98,7 +110,7 @@ $('resetSave').addEventListener('click', () => {
   if (!confirm('Resetar definitivamente o save de Império de Monstros?')) return;
   clearSave();
   state = createDefaultState();
-  persistAndRender('Save resetado. O império recomeçou do zero.');
+  refreshAfterStructuralChange('Save resetado. O império recomeçou do zero.', { producersChanged: true });
 });
 
 function spawnSoulBurst() {
@@ -130,12 +142,28 @@ function loop(now) {
   if (eventAccumulator >= BLOOD_MOON_CONFIG.checkEverySeconds) {
     const elapsed = eventAccumulator;
     eventAccumulator = 0;
-    if (maybeStartBloodMoon(state, elapsed)) persistAndRender('A Lua Sangrenta nasceu: produção dobrada por 20 segundos.');
+    if (maybeStartBloodMoon(state, elapsed)) {
+      showMessage('A Lua Sangrenta nasceu: produção dobrada por 20 segundos.');
+      saveGame(state);
+      updateWorldVisuals(state);
+    }
   }
-  render(state);
+  updateResourceDisplays(state);
+  const visibility = upgradeVisibilitySignature(state);
+  if (visibility !== lastUpgradeVisibility) {
+    renderUpgradeList(state);
+    lastUpgradeVisibility = visibility;
+  }
+  const bloodMoonActive = Date.now() < state.bloodMoonUntil;
+  if (bloodMoonActive !== wasBloodMoonActive) {
+    updateWorldVisuals(state);
+    wasBloodMoonActive = bloodMoonActive;
+  }
   requestAnimationFrame(loop);
 }
 
 setInterval(() => saveGame(state), 5000);
 render(state);
+lastUpgradeVisibility = upgradeVisibilitySignature(state);
+wasBloodMoonActive = Date.now() < state.bloodMoonUntil;
 requestAnimationFrame(loop);

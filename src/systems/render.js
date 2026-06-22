@@ -17,10 +17,10 @@ export function spawnFloatingText(text, x, y) {
   element.style.left = `${x}px`;
   element.style.top = `${y}px`;
   document.body.appendChild(element);
-  setTimeout(() => element.remove(), 1100);
+  setTimeout(() => element.remove(), 900);
 }
 
-function renderProducerStage(state) {
+export function renderProducerStage(state) {
   $('producerStage').innerHTML = PRODUCER_DEFINITIONS
     .filter(producer => state.producers[producer.id] > 0)
     .map(producer => `<div class="producer-visual pixel-sprite ${producer.visualClass}" title="${producer.name}"><i></i><b></b><em></em><span></span></div>`)
@@ -52,20 +52,21 @@ function updateMilestone(state) {
   $('nextMilestoneText').textContent = 'Continue ampliando produtores e upgrades.';
 }
 
-export function render(state) {
+export function updateResourceDisplays(state) {
   $('soulsDisplay').textContent = formatNumber(state.almas);
   $('spsDisplay').textContent = `${formatNumber(productionPerSecond(state))}/s`;
   $('spcDisplay').textContent = formatNumber(clickPower(state));
   $('blueFlamesDisplay').textContent = formatNumber(state.chamasAzuis);
-  $('totalSoulsDisplay').textContent = formatNumber(state.totalSouls);
-  $('totalClicksDisplay').textContent = formatNumber(state.totalClicks);
-  $('totalProducersDisplay').textContent = Object.values(state.producers).reduce((a, b) => a + b, 0);
-  $('totalUpgradesDisplay').textContent = state.upgrades.length;
+}
+
+export function updateWorldVisuals(state) {
   document.body.classList.toggle('blood-moon-active', isBloodMoonActive(state));
   document.body.dataset.worldStage = worldStage(state);
   $('eventBanner').hidden = !isBloodMoonActive(state);
   updateMilestone(state);
+}
 
+export function renderProducerList(state) {
   $('producerList').innerHTML = PRODUCER_DEFINITIONS.map(producer => {
     const cost = currentCost(producer, state);
     const quantity = state.producers[producer.id];
@@ -77,7 +78,16 @@ export function render(state) {
       <div class="card-actions"><button type="button" data-buy-producer="${producer.id}">Comprar</button><button type="button" data-buy-max="${producer.id}">Comprar máximo</button></div>
     </article>`;
   }).join('');
+}
 
+export function upgradeVisibilitySignature(state) {
+  return UPGRADE_DEFINITIONS
+    .filter(upgrade => upgrade.unlock(state) || state.upgrades.includes(upgrade.id))
+    .map(upgrade => `${upgrade.id}:${state.upgrades.includes(upgrade.id) ? '1' : '0'}`)
+    .join('|');
+}
+
+export function renderUpgradeList(state) {
   const visibleUpgrades = UPGRADE_DEFINITIONS.filter(upgrade => upgrade.unlock(state) || state.upgrades.includes(upgrade.id));
   $('upgradeList').innerHTML = visibleUpgrades.length ? visibleUpgrades.map(upgrade => {
     const bought = state.upgrades.includes(upgrade.id);
@@ -88,6 +98,20 @@ export function render(state) {
       <button type="button" data-buy-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : 'Comprar upgrade'}</button>
     </article>`;
   }).join('') : '<p class="empty-state">Colete mais Almas ou compre produtores para revelar upgrades.</p>';
+}
 
+export function updateStatistics(state) {
+  $('totalSoulsDisplay').textContent = formatNumber(state.totalSouls);
+  $('totalClicksDisplay').textContent = formatNumber(state.totalClicks);
+  $('totalProducersDisplay').textContent = Object.values(state.producers).reduce((a, b) => a + b, 0);
+  $('totalUpgradesDisplay').textContent = state.upgrades.length;
+}
+
+export function render(state) {
+  updateResourceDisplays(state);
+  updateStatistics(state);
+  updateWorldVisuals(state);
+  renderProducerList(state);
+  renderUpgradeList(state);
   renderProducerStage(state);
 }
