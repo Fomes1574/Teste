@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Império de Monstros v0.2</title>
+  <title>Império de Monstros v0.3</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -15,7 +15,7 @@
     <div class="broken-tower tower-left"></div><div class="broken-tower tower-right"></div>
     <div class="crimson-particles"></div>
     <div class="road-perspective"><span></span></div>
-    <div class="walking-hero hero-a"></div><div class="walking-hero hero-b"></div>
+    <div id="heroLane" class="hero-lane"></div>
     <div class="ritual-backglow"></div>
     <div id="producerStage" class="producer-stage"></div>
   </div>
@@ -23,9 +23,9 @@
   <main class="app-shell">
     <header class="hero-panel glass-panel">
       <div>
-        <p class="eyebrow">Versão 0.2 · Núcleo dark fantasy</p>
+        <p class="eyebrow">Versão 0.3 · 16-bit dark fantasy</p>
         <h1>Império de Monstros</h1>
-        <p class="subtitle">Erga um domínio sombrio coletando Almas, invocando produtores e fortalecendo o ritual.</p>
+        <p class="subtitle">Um incremental pixel art onde cada clique fortalece o selo e transforma o mundo.</p>
       </div>
       <div id="eventBanner" class="event-banner" hidden>
         <strong>Lua Sangrenta</strong><span>Produção 2x enquanto o céu arde.</span>
@@ -57,6 +57,11 @@
         <aside class="message-panel">
           <h2>Crônica do Ritual</h2>
           <div id="messageBox" class="message-box" role="status" aria-live="polite">O selo aguarda sua primeira Alma.</div>
+          <div class="milestone-box">
+            <span>Próximo Marco</span>
+            <strong id="nextMilestoneTitle">Primeiro Goblin</strong>
+            <p id="nextMilestoneText">Colete 15 Almas para invocar seu primeiro produtor.</p>
+          </div>
         </aside>
       </div>
     </section>
