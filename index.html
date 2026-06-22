@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Império de Monstros</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background-scene" aria-hidden="true">
+    <div class="moon"></div>
+    <div class="road"></div>
+    <div class="decor hero hero-one">⚔️</div>
+    <div class="decor hero hero-two">🛡️</div>
+    <div class="decor monster monster-one">👹</div>
+    <div class="decor monster monster-two">🐉</div>
+    <div class="decor monster monster-three">💀</div>
+  </div>
+
+  <main class="game-shell">
+    <header class="game-header">
+      <div>
+        <p class="eyebrow">Clicker incremental single-player</p>
+        <h1>Império de Monstros</h1>
+      </div>
+      <div id="eventBanner" class="event-banner" hidden>Lua Sangrenta ativa: produção 2x!</div>
+    </header>
+
+    <section class="stats-strip" aria-label="Recursos principais">
+      <article><span>Almas</span><strong id="soulsDisplay">0</strong></article>
+      <article><span>Almas por segundo</span><strong id="spsDisplay">0/s</strong></article>
+      <article><span>Almas por clique</span><strong id="spcDisplay">1</strong></article>
+      <article><span>Chamas Azuis</span><strong id="blueFlamesDisplay">0</strong></article>
+    </section>
+
+    <nav class="tabs" aria-label="Abas do jogo">
+      <button class="tab-button active" data-tab="main">Principal</button>
+      <button class="tab-button" data-tab="monsters">Monstros</button>
+      <button class="tab-button" data-tab="upgrades">Upgrades</button>
+      <button class="tab-button" data-tab="statistics">Estatísticas</button>
+    </nav>
+
+    <section id="main" class="tab-panel active">
+      <div class="ritual-card">
+        <button id="ritualButton" class="ritual-button" aria-label="Realizar ritual para ganhar Almas">
+          <span class="ritual-circle">⛧</span>
+        </button>
+        <p>Clique no selo profano para coletar Almas.</p>
+      </div>
+      <div id="messageBox" class="message-box" role="status" aria-live="polite"></div>
+    </section>
+
+    <section id="monsters" class="tab-panel">
+      <h2>Monstros produtores</h2>
+      <div id="producerList" class="card-grid"></div>
+    </section>
+
+    <section id="upgrades" class="tab-panel">
+      <h2>Upgrades</h2>
+      <div id="upgradeList" class="card-grid"></div>
+    </section>
+
+    <section id="statistics" class="tab-panel">
+      <h2>Estatísticas</h2>
+      <div class="statistics-grid">
+        <article><span>Total de Almas coletadas</span><strong id="totalSoulsDisplay">0</strong></article>
+        <article><span>Total de cliques</span><strong id="totalClicksDisplay">0</strong></article>
+        <article><span>Produtores comprados</span><strong id="totalProducersDisplay">0</strong></article>
+        <article><span>Upgrades comprados</span><strong id="totalUpgradesDisplay">0</strong></article>
+      </div>
+    </section>
+
+    <section class="save-controls" aria-label="Controles de save">
+      <button id="exportSave">Exportar Save</button>
+      <label class="import-label" for="importSave">Importar Save</label>
+      <input id="importSave" type="file" accept="application/json,.json" />
+      <button id="resetSave" class="danger">Resetar Save</button>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
