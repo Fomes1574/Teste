@@ -153,7 +153,11 @@ function spawnStageBurst() {
 function spawnHero() {
   const lane = $('heroLane');
   const hero = document.createElement('div');
-  hero.className = `pixel-hero ${Math.random() > 0.5 ? 'hero-knight' : 'hero-ranger'}`;
+  const isKnight = Math.random() > 0.5;
+  hero.className = `stage-hero pixel-hero ${isKnight ? 'hero-knight' : 'hero-ranger'} state-walking`;
+  hero.innerHTML = isKnight
+    ? '<div class="sprite hero-knight-sprite"><span class="helmet"></span><span class="face"></span><span class="body"></span><span class="sword"></span><span class="shield"></span><span class="leg left"></span><span class="leg right"></span></div>'
+    : '<div class="sprite hero-ranger-sprite"><span class="hood"></span><span class="face"></span><span class="body"></span><span class="bow"></span><span class="arrow"></span><span class="leg left"></span><span class="leg right"></span></div>';
   lane.appendChild(hero);
   hero.addEventListener('animationend', () => {
     hero.classList.add('hero-soul');

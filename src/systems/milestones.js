@@ -28,15 +28,19 @@ export function markMilestoneSeen(state, milestoneId) {
   if (!state.seenMilestones.includes(milestoneId)) state.seenMilestones.push(milestoneId);
 }
 
-export function visualTierForQuantity(quantity) {
-  if (quantity >= 1000) return 5;
-  if (quantity >= 500) return 4;
-  if (quantity >= 250) return 3;
-  if (quantity >= 100) return 2;
-  if (quantity >= 50) return 1;
-  return quantity > 0 ? 0 : -1;
+export function getProducerVisualTier(producerId, quantity) {
+  if (quantity >= 1000) return 6;
+  if (quantity >= 500) return 5;
+  if (quantity >= 250) return 4;
+  if (quantity >= 100) return 3;
+  if (quantity >= 50) return 2;
+  return quantity > 0 ? 1 : 0;
 }
 
 export function visualTierSignature(state) {
-  return PRODUCER_DEFINITIONS.map(producer => `${producer.id}:${visualTierForQuantity(state.producers[producer.id] || 0)}`).join('|');
+  return PRODUCER_DEFINITIONS.map(producer => `${producer.id}:${getProducerVisualTier(producer.id, state.producers[producer.id] || 0)}`).join('|');
+}
+
+export function visualTierForQuantity(quantity) {
+  return getProducerVisualTier(null, quantity);
 }
