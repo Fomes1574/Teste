@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Império de Monstros v0.3</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="worldScene" class="world-scene" aria-hidden="true">
+    <div class="sky-gradient"></div>
+    <div class="blood-moon-orb"></div>
+    <div class="mist mist-a"></div><div class="mist mist-b"></div>
+    <div class="village village-left"></div><div class="village village-right"></div>
+    <div class="broken-tower tower-left"></div><div class="broken-tower tower-right"></div>
+    <div class="crimson-particles"></div>
+    <div class="road-perspective"><span></span></div>
+    <div id="heroLane" class="hero-lane"></div>
+    <div class="ritual-backglow"></div>
+    <div id="producerStage" class="producer-stage"></div>
+  </div>
+
+  <main class="app-shell">
+    <header class="hero-panel glass-panel">
+      <div>
+        <p class="eyebrow">Versão 0.3 · 16-bit dark fantasy</p>
+        <h1>Império de Monstros</h1>
+        <p class="subtitle">Um incremental pixel art onde cada clique fortalece o selo e transforma o mundo.</p>
+      </div>
+      <div id="eventBanner" class="event-banner" hidden>
+        <strong>Lua Sangrenta</strong><span>Produção 2x enquanto o céu arde.</span>
+      </div>
+    </header>
+
+    <section class="resource-bar glass-panel" aria-label="Recursos principais">
+      <article><span>Almas</span><strong id="soulsDisplay">0</strong></article>
+      <article><span>Almas / segundo</span><strong id="spsDisplay">0/s</strong></article>
+      <article><span>Almas / clique</span><strong id="spcDisplay">1</strong></article>
+      <article class="blue-flame"><span>Chamas Azuis</span><strong id="blueFlamesDisplay">0</strong><small>Preparado para futuro ritual</small></article>
+    </section>
+
+    <nav class="tabs glass-panel" aria-label="Abas do jogo">
+      <button class="tab-button active" data-tab="main">Principal</button>
+      <button class="tab-button" data-tab="monsters">Monstros</button>
+      <button class="tab-button" data-tab="upgrades">Upgrades</button>
+      <button class="tab-button" data-tab="statistics">Estatísticas</button>
+    </nav>
+
+    <section id="main" class="tab-panel active glass-panel">
+      <div class="main-layout">
+        <div class="ritual-card">
+          <button id="ritualButton" class="ritual-button" aria-label="Realizar ritual para ganhar Almas">
+            <span class="ritual-glow"></span>
+            <span class="ritual-premium-seal">
+              <svg class="ritual-pentagram" viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="seal-line seal-line-soft" cx="50" cy="50" r="45" />
+                <circle class="seal-line" cx="50" cy="50" r="38" />
+                <circle class="seal-line seal-line-soft" cx="50" cy="50" r="24" />
+                <polygon class="seal-star" points="50,9 62,68 16,32 84,32 38,68" />
+                <circle class="seal-line" cx="50" cy="50" r="9" />
+              </svg>
+            </span>
+            <span class="ritual-rune-orbit">ᚱ ᛟ ᚾ ᛃ ᛉ ᚲ ᚨ ᛗ ᛞ ᛇ</span>
+            <span class="ritual-core">✦</span>
+            <span class="ritual-particles" aria-hidden="true"></span>
+          </button>
+          <p>Pressione o círculo ritualístico para arrancar Almas do véu.</p>
+        </div>
+        <aside class="message-panel">
+          <h2>Crônica do Ritual</h2>
+          <div id="messageBox" class="message-box" role="status" aria-live="polite">O selo aguarda sua primeira Alma.</div>
+          <div class="milestone-box">
+            <span>Próximo Marco</span>
+            <strong id="nextMilestoneTitle">Primeiro Goblin</strong>
+            <p id="nextMilestoneText">Colete 15 Almas para invocar seu primeiro produtor.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="monsters" class="tab-panel glass-panel">
+      <div class="section-title"><h2>Monstros produtores</h2><p>Invocações automáticas. O custo usa: custo base × crescimento ^ quantidade.</p></div>
+      <div id="producerList" class="card-grid"></div>
+    </section>
+
+    <section id="upgrades" class="tab-panel glass-panel">
+      <div class="section-title"><h2>Upgrades</h2><p>Aparecem apenas quando seus requisitos são alcançados.</p></div>
+      <div id="upgradeList" class="card-grid"></div>
+    </section>
+
+    <section id="statistics" class="tab-panel glass-panel">
+      <div class="section-title"><h2>Estatísticas</h2><p>Registro atual do seu império.</p></div>
+      <div class="statistics-grid">
+        <article><span>Total de Almas coletadas</span><strong id="totalSoulsDisplay">0</strong></article>
+        <article><span>Total de cliques</span><strong id="totalClicksDisplay">0</strong></article>
+        <article><span>Produtores comprados</span><strong id="totalProducersDisplay">0</strong></article>
+        <article><span>Upgrades comprados</span><strong id="totalUpgradesDisplay">0</strong></article>
+      </div>
+    </section>
+
+    <section class="save-controls glass-panel" aria-label="Controles de save">
+      <button id="exportSave">Exportar Save</button>
+      <label class="import-label" for="importSave">Importar Save</label>
+      <input id="importSave" type="file" accept="application/json,.json" />
+      <button id="resetSave" class="danger">Resetar Save</button>
+    </section>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
