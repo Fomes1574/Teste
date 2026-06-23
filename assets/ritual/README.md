@@ -1,4 +1,5 @@
 # Ritual assets
 
-Optional premium seal image overrides can be placed here as `pentagram-base.webp` or `pentagram-base.png`.
-The game uses a CSS/SVG fallback and does not require these files to run on GitHub Pages.
+Add the final premium seal artwork here as `pentagram-seal.webp` or `pentagram-seal.png`. The CSS already checks those names first.
+Legacy fallback names `pentagram-base.webp` and `pentagram-base.png` are also supported by CSS, but are not required.
+The game still has CSS/SVG fallback layers and does not require external links to run on GitHub Pages.
