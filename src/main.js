@@ -1,10 +1,11 @@
 import { loadGame, saveGame, parseImportedSave, clearSave } from './systems/save.js';
 import { applyOfflineProgress } from './systems/offline.js';
-import { addSouls, buyMaxProducer, buyProducer, buyUpgrade, clickPower, productionPerSecond } from './systems/economy.js';
+import { addSouls, buyMaxProducer, buyMilestoneUpgrade, buyProducer, buyUpgrade, clickPower, productionPerSecond } from './systems/economy.js';
 import { maybeStartBloodMoon, BLOOD_MOON_CONFIG } from './systems/events.js';
 import { render, renderProducerList, renderProducerStage, renderUpgradeList, showMessage, spawnFloatingText, updateResourceDisplays, updateStatistics, updateWorldVisuals, upgradeVisibilitySignature } from './systems/render.js';
 import { formatNumber } from './utils/format.js';
 import { createDefaultState } from './state.js';
+import { markMilestoneSeen, newlyReachedMilestones, visualTierSignature } from './systems/milestones.js';
 
 let state = loadGame();
 const offline = applyOfflineProgress(state);
@@ -17,16 +18,32 @@ const $ = id => document.getElementById(id);
 let heroTimer = 0;
 let lastUpgradeVisibility = '';
 let wasBloodMoonActive = false;
+let lastVisualTierSignature = '';
+
+function handleReachedMilestones() {
+  const reached = newlyReachedMilestones(state);
+  for (const milestone of reached) {
+    markMilestoneSeen(state, milestone.id);
+    showMessage(`Marco alcançado: ${milestone.milestone}. ${milestone.name} foi desbloqueado.`);
+    spawnSoulBurst();
+  }
+  return reached.length > 0;
+}
 
 function refreshAfterStructuralChange(message, { producersChanged = false } = {}) {
-  if (message) showMessage(message);
+  const milestoneReached = handleReachedMilestones();
+  if (message && !milestoneReached) showMessage(message);
   saveGame(state);
   updateResourceDisplays(state);
   updateStatistics(state);
   updateWorldVisuals(state);
   renderProducerList(state);
   renderUpgradeList(state);
-  if (producersChanged) renderProducerStage(state);
+  const visualSignature = visualTierSignature(state);
+  if (producersChanged && visualSignature !== lastVisualTierSignature) {
+    renderProducerStage(state);
+    lastVisualTierSignature = visualSignature;
+  }
   lastUpgradeVisibility = upgradeVisibilitySignature(state);
   wasBloodMoonActive = Date.now() < state.bloodMoonUntil;
 }
@@ -62,13 +79,15 @@ document.querySelectorAll('.tab-button').forEach(button => {
 });
 
 document.addEventListener('click', event => {
-  const action = event.target.closest('[data-buy-producer], [data-buy-max], [data-buy-upgrade]');
+  const action = event.target.closest('[data-buy-producer], [data-buy-max], [data-buy-upgrade], [data-buy-milestone-upgrade]');
   if (!action) return;
   const producerId = action.dataset.buyProducer;
+  const buyAmount = Number(action.dataset.buyAmount || 1);
   const maxProducerId = action.dataset.buyMax;
   const upgradeId = action.dataset.buyUpgrade;
+  const milestoneUpgradeId = action.dataset.buyMilestoneUpgrade;
   if (producerId) {
-    const bought = buyProducer(state, producerId);
+    const bought = buyProducer(state, producerId, buyAmount);
     if (bought) { spawnSoulBurst(); refreshAfterStructuralChange('Produtor invocado. A presença dele agora aparece no cenário.', { producersChanged: true }); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); }
   }
   if (maxProducerId) {
@@ -77,6 +96,9 @@ document.addEventListener('click', event => {
   }
   if (upgradeId) {
     if (buyUpgrade(state, upgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange('Upgrade comprado e aplicado ao ritual.'); flashPurchasedCard(`[data-buy-upgrade="${upgradeId}"]`); }
+  }
+  if (milestoneUpgradeId) {
+    if (buyMilestoneUpgrade(state, milestoneUpgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange('Upgrade de Marco comprado. A horda ficou mais forte.'); flashPurchasedCard(`[data-buy-milestone-upgrade="${milestoneUpgradeId}"]`); }
   }
 });
 
@@ -165,5 +187,6 @@ function loop(now) {
 setInterval(() => saveGame(state), 5000);
 render(state);
 lastUpgradeVisibility = upgradeVisibilitySignature(state);
+lastVisualTierSignature = visualTierSignature(state);
 wasBloodMoonActive = Date.now() < state.bloodMoonUntil;
 requestAnimationFrame(loop);

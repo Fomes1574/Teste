@@ -1,6 +1,7 @@
 import { PRODUCER_DEFINITIONS } from '../data/producers.js';
 import { UPGRADE_DEFINITIONS } from '../data/upgrades.js';
 import { BLOOD_MOON_CONFIG } from './events.js';
+import { MILESTONE_UPGRADE_DEFINITIONS } from '../data/milestoneUpgrades.js';
 
 export function currentCost(producer, state) {
   return producer.baseCost * Math.pow(producer.growth, state.producers[producer.id] || 0);
@@ -17,7 +18,10 @@ export function productionPerSecond(state, now = Date.now()) {
   for (const producer of PRODUCER_DEFINITIONS) {
     const producerMultiplier = UPGRADE_DEFINITIONS
       .filter(upgrade => upgrade.type === 'producer' && upgrade.producerId === producer.id && state.upgrades.includes(upgrade.id))
-      .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1);
+      .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1)
+      * MILESTONE_UPGRADE_DEFINITIONS
+        .filter(upgrade => upgrade.producerId === producer.id && state.milestoneUpgrades.includes(upgrade.id))
+        .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1);
     total += (state.producers[producer.id] || 0) * producer.production * producerMultiplier;
   }
   total *= UPGRADE_DEFINITIONS
@@ -57,5 +61,13 @@ export function buyUpgrade(state, upgradeId) {
   if (!upgrade || state.upgrades.includes(upgradeId) || !upgrade.unlock(state) || state.almas < upgrade.cost) return false;
   state.almas -= upgrade.cost;
   state.upgrades.push(upgradeId);
+  return true;
+}
+
+export function buyMilestoneUpgrade(state, upgradeId) {
+  const upgrade = MILESTONE_UPGRADE_DEFINITIONS.find(item => item.id === upgradeId);
+  if (!upgrade || state.milestoneUpgrades.includes(upgradeId) || !upgrade.unlock(state) || state.almas < upgrade.cost) return false;
+  state.almas -= upgrade.cost;
+  state.milestoneUpgrades.push(upgradeId);
   return true;
 }
