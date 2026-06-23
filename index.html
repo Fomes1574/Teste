@@ -50,7 +50,19 @@
       <div class="main-layout">
         <div class="ritual-card">
           <button id="ritualButton" class="ritual-button" aria-label="Realizar ritual para ganhar Almas">
-            <span class="outer-ring"></span><span class="rune-ring">ᚱ ᛟ ᚾ ᛃ ᛉ ᚲ ᚨ ᛗ</span><span class="inner-ring"></span><span class="sigil-lines"></span><span class="sigil-core">✦</span>
+            <span class="ritual-glow"></span>
+            <span class="ritual-premium-seal">
+              <svg class="ritual-pentagram" viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="seal-line seal-line-soft" cx="50" cy="50" r="45" />
+                <circle class="seal-line" cx="50" cy="50" r="38" />
+                <circle class="seal-line seal-line-soft" cx="50" cy="50" r="24" />
+                <polygon class="seal-star" points="50,9 62,68 16,32 84,32 38,68" />
+                <circle class="seal-line" cx="50" cy="50" r="9" />
+              </svg>
+            </span>
+            <span class="ritual-rune-orbit">ᚱ ᛟ ᚾ ᛃ ᛉ ᚲ ᚨ ᛗ ᛞ ᛇ</span>
+            <span class="ritual-core">✦</span>
+            <span class="ritual-particles" aria-hidden="true"></span>
           </button>
           <p>Pressione o círculo ritualístico para arrancar Almas do véu.</p>
         </div>
