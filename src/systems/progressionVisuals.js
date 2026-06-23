@@ -9,10 +9,42 @@ const fallbackMarkup = {
   default: '<div class="sprite monster-sprite"><span class="head"></span><span class="body"></span><span class="arm left"></span><span class="arm right"></span></div>'
 };
 
+function visualPriority(state, producer) {
+  const quantity = state.producers[producer.id] || 0;
+  if (quantity <= 0) return -1;
+  return quantity * producer.production;
+}
+
+const SPECIAL_STAGE_SLOTS = {
+  gargoyle: 'prop-left',
+  dragon: 'sky-dragon-slot',
+  portal: 'background-portal-slot',
+  lich: 'background-lich-slot',
+  god: 'background-god-slot'
+};
+
+const SUPPORT_PRODUCERS = new Set(['witch', 'necromancer']);
+const FRONT_STAGE_SLOTS = ['monster-front-left', 'monster-front-center'];
+const SUPPORT_STAGE_SLOTS = ['monster-support-left', 'monster-support-back'];
+
 export function updateProducerStageTiers(state) {
   const stage = document.getElementById('producerStage');
   const empireStage = document.getElementById('empireStage');
   if (!stage) return;
+
+  const frontProducerIds = PRODUCER_DEFINITIONS
+    .filter(producer => (state.producers[producer.id] || 0) > 0)
+    .filter(producer => !SUPPORT_PRODUCERS.has(producer.id) && !SPECIAL_STAGE_SLOTS[producer.id])
+    .sort((a, b) => visualPriority(state, b) - visualPriority(state, a))
+    .slice(0, FRONT_STAGE_SLOTS.length)
+    .map(producer => producer.id);
+
+  const supportProducerIds = PRODUCER_DEFINITIONS
+    .filter(producer => (state.producers[producer.id] || 0) > 0)
+    .filter(producer => SUPPORT_PRODUCERS.has(producer.id) || (!frontProducerIds.includes(producer.id) && !SPECIAL_STAGE_SLOTS[producer.id]))
+    .sort((a, b) => visualPriority(state, b) - visualPriority(state, a))
+    .slice(0, SUPPORT_STAGE_SLOTS.length)
+    .map(producer => producer.id);
 
   for (const producer of PRODUCER_DEFINITIONS) {
     const quantity = state.producers[producer.id] || 0;
@@ -35,6 +67,15 @@ export function updateProducerStageTiers(state) {
       stage.appendChild(element);
     }
     element.dataset.tier = String(tier);
+    const frontSlotIndex = frontProducerIds.indexOf(producer.id);
+    const supportSlotIndex = supportProducerIds.indexOf(producer.id);
+    const slot = SPECIAL_STAGE_SLOTS[producer.id]
+      || (frontSlotIndex >= 0 ? FRONT_STAGE_SLOTS[frontSlotIndex] : null)
+      || (supportSlotIndex >= 0 ? SUPPORT_STAGE_SLOTS[supportSlotIndex] : 'prop-right');
+    element.dataset.slot = slot;
+    element.classList.toggle('is-featured-unit', frontSlotIndex >= 0);
+    element.classList.toggle('is-support-unit', supportSlotIndex >= 0);
+    element.classList.toggle('is-background-unit', Boolean(SPECIAL_STAGE_SLOTS[producer.id]));
     for (let i = 1; i <= 6; i += 1) element.classList.toggle(`producer-tier-${i}`, tier === i);
   }
 }

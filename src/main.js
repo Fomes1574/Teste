@@ -88,11 +88,11 @@ document.addEventListener('click', event => {
   const milestoneUpgradeId = action.dataset.buyMilestoneUpgrade;
   if (producerId) {
     const bought = buyProducer(state, producerId, buyAmount);
-    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange('Produtor invocado. A presença dele agora aparece no cenário.', { producersChanged: true }); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); }
+    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange('Produtor invocado. A presença dele agora aparece no cenário.', { producersChanged: true }); pulseStageUnit(producerId); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); }
   }
   if (maxProducerId) {
     const bought = buyMaxProducer(state, maxProducerId);
-    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange(`${bought} produtor(es) invocado(s).`, { producersChanged: true }); flashPurchasedCard(`[data-buy-max="${maxProducerId}"]`); }
+    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange(`${bought} produtor(es) invocado(s).`, { producersChanged: true }); pulseStageUnit(maxProducerId); flashPurchasedCard(`[data-buy-max="${maxProducerId}"]`); }
   }
   if (upgradeId) {
     if (buyUpgrade(state, upgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange('Upgrade comprado e aplicado ao ritual.'); flashPurchasedCard(`[data-buy-upgrade="${upgradeId}"]`); }
@@ -148,6 +148,13 @@ function spawnStageBurst() {
   burst.className = 'stage-burst';
   layer.appendChild(burst);
   setTimeout(() => burst.remove(), 750);
+}
+
+function pulseStageUnit(producerId) {
+  const unit = document.querySelector(`[data-producer-visual="${producerId}"]`);
+  if (!unit) return;
+  unit.classList.add('unit-attack-pulse');
+  setTimeout(() => unit.classList.remove('unit-attack-pulse'), 520);
 }
 
 function spawnHero() {

@@ -287,3 +287,469 @@ body[data-world-stage="stage-mid"] .mist{opacity:.58}body[data-world-stage="stag
     height:clamp(250px,70vw,380px);
   }
 }
+
+/* v0.3.6 final cascade: manter a leitura lateral acima dos ajustes de escala anteriores */
+.stage-ground .stage-road{
+  left:0;
+  right:0;
+  top:auto;
+  bottom:0;
+  width:100%;
+  height:32%;
+  transform:none;
+  border-left:0;
+  border-right:0;
+  border-top:8px solid #3b202a;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,65,95,.11) 0 3px,transparent 3px 70px),
+    repeating-linear-gradient(0deg,#21151a 0 9px,#170e12 9px 18px);
+  box-shadow:inset 0 16px 0 rgba(255,44,80,.1),0 -18px 44px rgba(255,37,73,.12);
+}
+
+.stage-ground .stage-road span{
+  background:
+    linear-gradient(90deg,transparent 0 41%,rgba(255,63,94,.22) 41% 59%,transparent 59%),
+    repeating-linear-gradient(90deg,transparent 0 42px,rgba(255,129,83,.1) 42px 46px);
+}
+
+.stage-unit[data-slot="monster-front-left"]{left:19%;right:auto;bottom:25%}
+.stage-unit[data-slot="monster-front-center"]{left:32%;right:auto;bottom:26%}
+.stage-unit[data-slot="monster-support-left"]{left:10%;right:auto;bottom:37%;opacity:.9;transform:scale(.86)}
+.stage-unit[data-slot="monster-support-back"]{left:24%;right:auto;bottom:41%;opacity:.86;transform:scale(.82)}
+.stage-unit[data-slot="prop-left"]{left:8%;right:auto;bottom:46%;opacity:.72;transform:scale(.74)}
+.stage-unit[data-slot="prop-center"]{left:42%;right:auto;bottom:38%;opacity:.78;transform:scale(.82)}
+.stage-unit[data-slot="prop-right"]{left:auto;right:12%;bottom:40%;opacity:.66;transform:scale(.72)}
+.stage-unit[data-slot="sky-dragon-slot"]{left:27%;right:auto;top:10%;bottom:auto;transform:none}
+.stage-unit[data-slot="background-portal-slot"]{left:auto;right:22%;bottom:38%;transform:none}
+.stage-unit[data-slot="background-lich-slot"]{left:39%;right:auto;bottom:37%;transform:none}
+.stage-unit[data-slot="background-god-slot"]{left:44%;right:auto;top:18%;bottom:auto;transform:none}
+
+.stage-hero.state-walking{
+  right:-10%;
+  bottom:25%!important;
+  animation:heroSideWalk 5.8s linear forwards;
+}
+
+@media(max-width:1200px){
+  .stage-ground .stage-road{
+    height:34%;
+  }
+
+  .stage-unit[data-slot="monster-front-left"]{left:17%;bottom:26%}
+  .stage-unit[data-slot="monster-front-center"]{left:34%;bottom:27%}
+  .stage-hero.state-walking{bottom:26%!important}
+}
+
+/* v0.3.6: estrada horizontal e direção de cena lateral */
+.stage-background .stage-sky{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 78% 18%,rgba(255,32,64,.42) 0 5%,rgba(92,9,31,.18) 6% 12%,transparent 13%),
+    linear-gradient(180deg,#090b1f 0%,#15112a 42%,#241323 68%,#10080d 100%);
+}
+
+.stage-background .stage-ruins{
+  position:absolute;
+  left:0;
+  right:0;
+  top:30%;
+  height:20%;
+  pointer-events:none;
+  background:linear-gradient(to top,#09060a 68%,transparent);
+  clip-path:polygon(0 100%,0 55%,7% 55%,7% 28%,13% 28%,13% 64%,21% 64%,21% 40%,28% 40%,28% 72%,38% 72%,38% 48%,45% 48%,45% 76%,56% 76%,56% 35%,64% 35%,64% 72%,73% 72%,73% 44%,82% 44%,82% 70%,92% 70%,92% 52%,100% 52%,100% 100%);
+  opacity:.84;
+}
+
+.stage-ground .stage-road{
+  left:0;
+  right:0;
+  top:auto;
+  bottom:0;
+  width:100%;
+  height:32%;
+  transform:none;
+  border-left:0;
+  border-right:0;
+  border-top:8px solid #3b202a;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,65,95,.11) 0 3px,transparent 3px 70px),
+    repeating-linear-gradient(0deg,#21151a 0 9px,#170e12 9px 18px);
+  box-shadow:inset 0 16px 0 rgba(255,44,80,.1),0 -18px 44px rgba(255,37,73,.12);
+}
+
+.stage-ground .stage-road span{
+  background:
+    linear-gradient(90deg,transparent 0 41%,rgba(255,63,94,.22) 41% 59%,transparent 59%),
+    repeating-linear-gradient(90deg,transparent 0 42px,rgba(255,129,83,.1) 42px 46px);
+}
+
+.stage-conflict-zone{
+  position:absolute;
+  left:45%;
+  bottom:24%;
+  width:14%;
+  height:22%;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:6;
+  background:radial-gradient(circle,rgba(255,43,78,.2),transparent 64%);
+  box-shadow:0 0 38px rgba(255,43,78,.18);
+}
+
+.monster-front-left{left:18%;bottom:25%;width:12%;height:20%}
+.monster-front-center{left:31%;bottom:26%;width:13%;height:21%}
+.monster-support-left{left:9%;bottom:34%;width:13%;height:22%}
+.monster-support-back{left:23%;bottom:39%;width:13%;height:22%}
+.enemy-front-right{right:16%;bottom:25%;width:13%;height:22%}
+.enemy-mid-right{right:5%;bottom:29%;width:12%;height:20%}
+.enemy-entry-right{right:-4%;bottom:25%;width:13%;height:22%}
+.sky-dragon-slot{left:22%;top:8%;width:58%;height:22%}
+.background-portal-slot{right:22%;bottom:37%;width:14%;height:28%}
+.background-lich-slot{left:38%;bottom:35%;width:12%;height:34%}
+.background-god-slot{left:42%;top:16%;width:30%;height:56%}
+
+.stage-unit[data-slot="monster-front-left"]{left:19%;right:auto;bottom:25%}
+.stage-unit[data-slot="monster-front-center"]{left:32%;right:auto;bottom:26%}
+.stage-unit[data-slot="monster-support-left"]{left:10%;right:auto;bottom:37%;opacity:.9}
+.stage-unit[data-slot="monster-support-back"]{left:24%;right:auto;bottom:41%;opacity:.86}
+.stage-unit[data-slot="prop-left"]{left:8%;right:auto;bottom:46%;opacity:.72;transform:scale(.74)}
+.stage-unit[data-slot="prop-center"]{left:42%;right:auto;bottom:38%;opacity:.78;transform:scale(.82)}
+.stage-unit[data-slot="prop-right"]{left:auto;right:12%;bottom:40%;opacity:.66;transform:scale(.72)}
+.stage-unit[data-slot="sky-dragon-slot"]{left:27%;right:auto;top:10%;bottom:auto;transform:none}
+.stage-unit[data-slot="background-portal-slot"]{left:auto;right:22%;bottom:38%;transform:none}
+.stage-unit[data-slot="background-lich-slot"]{left:39%;right:auto;bottom:37%;transform:none}
+.stage-unit[data-slot="background-god-slot"]{left:44%;right:auto;top:18%;bottom:auto;transform:none}
+
+.stage-unit.is-support-unit{
+  filter:drop-shadow(0 5px 0 #050308) drop-shadow(0 0 12px rgba(185,70,255,.35));
+}
+
+.stage-unit.is-background-unit{
+  z-index:3;
+  pointer-events:none;
+}
+
+.stage-hero.state-walking{
+  right:-10%;
+  bottom:25%!important;
+  animation:heroSideWalk 5.8s linear forwards;
+}
+
+.stage-hero.hero-soul::after{
+  content:"";
+  position:absolute;
+  left:46%;
+  top:8%;
+  width:12px;
+  height:18px;
+  border-radius:50%;
+  background:#ffdce6;
+  box-shadow:0 0 18px #ff2b55,0 0 34px #ff2b55;
+  animation:soulRise 650ms ease-out forwards;
+}
+
+.unit-attack-pulse{
+  animation:unitAttackPulse .52s ease-out,unitIdle 1.2s ease-in-out infinite;
+}
+
+.stage-burst{
+  left:50%;
+  top:62%;
+}
+
+@keyframes heroSideWalk{
+  0%{right:-12%;transform:translateY(0)}
+  48%{right:17%;transform:translateY(-2px)}
+  70%{right:18%;filter:brightness(1.8) drop-shadow(0 0 12px #ff2b55)}
+  100%{right:19%;opacity:0;transform:translateY(-24px)}
+}
+
+@keyframes soulRise{
+  to{transform:translateY(-72px) scale(.72);opacity:0}
+}
+
+@keyframes unitAttackPulse{
+  35%{translate:18px -4px;filter:brightness(1.45) drop-shadow(0 0 18px #ff2b55)}
+  100%{translate:0 0}
+}
+
+@media(max-width:1200px){
+  .stage-ground .stage-road{
+    height:34%;
+  }
+
+  .stage-unit[data-slot="monster-front-left"]{left:17%;bottom:26%}
+  .stage-unit[data-slot="monster-front-center"]{left:34%;bottom:27%}
+  .stage-hero.state-walking{bottom:26%!important}
+}
+
+/* v0.3.5b: palco amplo, escala e composição de unidades */
+.app-shell{
+  width:min(1920px,calc(100vw - 24px));
+}
+
+.main-game-layout{
+  grid-template-columns:clamp(260px,18vw,360px) minmax(860px,1fr) clamp(260px,18vw,330px);
+  gap:clamp(18px,1.25vw,24px);
+}
+
+.main-game-layout>.empire-stage{
+  height:clamp(640px,72vh,860px);
+  min-height:clamp(640px,72vh,860px);
+}
+
+.main-game-layout .ritual-button{
+  width:clamp(240px,18vw,340px);
+  height:clamp(240px,18vw,340px);
+}
+
+.main-game-layout>.message-panel{
+  max-width:330px;
+}
+
+.stage-background,
+.stage-ground,
+.stage-monster-lane,
+.stage-enemy-lane,
+.stage-prop-layer,
+.stage-effect-layer,
+.stage-overlay{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.stage-background{z-index:1}
+.stage-ground{z-index:2}
+.stage-prop-layer{z-index:3}
+.stage-monster-lane{z-index:5}
+.stage-enemy-lane{z-index:6}
+.stage-effect-layer{z-index:7}
+.stage-overlay{z-index:8}
+
+.stage-slot{
+  position:absolute;
+  pointer-events:none;
+}
+
+.monster-slot-1{left:18%;bottom:19%;width:18%;height:24%}
+.monster-slot-2{left:34%;bottom:22%;width:18%;height:25%}
+.monster-slot-3{left:48%;bottom:18%;width:18%;height:25%}
+.monster-slot-support{left:7%;bottom:32%;width:20%;height:28%}
+.enemy-slot-1{right:8%;bottom:19%;width:18%;height:26%}
+.enemy-slot-2{right:22%;bottom:24%;width:16%;height:24%}
+.enemy-slot-3{right:3%;bottom:31%;width:15%;height:22%}
+.sky-slot{left:18%;top:8%;width:64%;height:24%}
+.background-boss-slot{left:38%;top:18%;width:28%;height:48%}
+.prop-left{left:6%;bottom:27%;width:24%;height:28%}
+.prop-center{left:38%;bottom:31%;width:24%;height:25%}
+.prop-right{right:8%;bottom:32%;width:22%;height:24%}
+
+.stage-ground .stage-road{
+  width:58%;
+  height:68%;
+  bottom:-15%;
+}
+
+.stage-unit{
+  width:clamp(64px,4.7vw,92px);
+  height:clamp(82px,5.9vw,118px);
+}
+
+.stage-unit[data-slot="monster-slot-1"]{left:18%;bottom:20%}
+.stage-unit[data-slot="monster-slot-2"]{left:35%;bottom:23%}
+.stage-unit[data-slot="monster-slot-3"]{left:49%;bottom:19%}
+.stage-unit[data-slot="monster-slot-support"]{
+  left:8%;
+  bottom:35%;
+  opacity:.68;
+  transform:scale(.72);
+  filter:drop-shadow(0 5px 0 #050308) drop-shadow(0 0 6px rgba(255,34,70,.45));
+}
+
+.empire-stage .visual-goblin{
+  width:clamp(58px,4.2vw,86px);
+  height:clamp(70px,5.2vw,94px);
+}
+
+.empire-stage .visual-skeleton{
+  width:clamp(74px,4.8vw,94px);
+  height:clamp(95px,6vw,115px);
+}
+
+.empire-stage .visual-witch{
+  width:clamp(82px,5vw,100px);
+  height:clamp(96px,6.1vw,120px);
+}
+
+.empire-stage .visual-necromancer{
+  width:clamp(88px,5.3vw,108px);
+  height:clamp(110px,6.7vw,130px);
+}
+
+.empire-stage .visual-demon{
+  width:clamp(112px,7vw,150px);
+  height:clamp(140px,8.8vw,180px);
+}
+
+.empire-stage .visual-dragon{
+  left:25%;
+  top:8%;
+  bottom:auto;
+  width:clamp(170px,16vw,310px);
+  height:clamp(70px,7vw,125px);
+  opacity:.8;
+}
+
+.empire-stage .visual-portal{
+  right:17%;
+  bottom:38%;
+  width:clamp(86px,6.5vw,140px);
+  height:clamp(120px,9vw,190px);
+}
+
+.empire-stage .visual-lich{
+  left:17%;
+  bottom:36%;
+  width:clamp(82px,5.8vw,118px);
+  height:clamp(130px,9vw,190px);
+  opacity:.82;
+}
+
+.empire-stage .visual-god{
+  left:46%;
+  bottom:34%;
+  width:clamp(170px,16vw,310px);
+  height:clamp(220px,22vw,430px);
+  opacity:.46;
+}
+
+.stage-hero{
+  width:clamp(86px,5.6vw,116px);
+  height:clamp(105px,6.7vw,130px);
+}
+
+.stage-hero.state-walking{
+  right:6%;
+  bottom:20%!important;
+}
+
+.stage-unit[data-tier="2"],
+.stage-unit[data-tier="3"],
+.stage-unit[data-tier="4"],
+.stage-unit[data-tier="5"],
+.stage-unit[data-tier="6"]{
+  scale:1;
+  transform:none;
+}
+
+.stage-unit[data-slot="monster-slot-support"]{
+  transform:scale(.72);
+}
+
+.stage-unit[data-tier="4"]{filter:drop-shadow(0 0 14px rgba(255,54,86,.55)) drop-shadow(0 6px 0 #050308)}
+.stage-unit[data-tier="5"]{filter:drop-shadow(0 0 18px rgba(255,54,86,.7)) drop-shadow(0 6px 0 #050308)}
+.stage-unit[data-tier="6"]{filter:drop-shadow(0 0 24px #ff294d) drop-shadow(0 7px 0 #050308)}
+
+.stage-prop{
+  position:absolute;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .35s ease;
+}
+
+.goblin-banner{left:-22%;bottom:80%;width:18px;height:54px;background:#35190f;border-left:5px solid #120805}
+.goblin-banner::after{content:"";position:absolute;left:5px;top:4px;width:35px;height:24px;background:#b61f36;clip-path:polygon(0 0,100% 0,72% 50%,100% 100%,0 100%)}
+.goblin-camp{left:-38%;bottom:-10%;width:70px;height:34px;background:#4b2519;border:5px solid #120805;clip-path:polygon(0 100%,20% 20%,50% 0,80% 20%,100% 100%)}
+.bone-wall{left:-34%;bottom:-5%;width:88px;height:28px;background:repeating-linear-gradient(90deg,#d9d1b8 0 8px,#8f846d 8px 12px);border:4px solid #241f1b}
+.witch-circle{left:-34%;bottom:-20%;width:120px;height:34px;border:4px solid rgba(255,67,125,.62);border-radius:50%;box-shadow:0 0 20px rgba(255,67,125,.55)}
+.necromancer-books{left:-22%;bottom:2%;width:60px;height:35px;background:linear-gradient(90deg,#4d1c25,#7d2730,#26143b);border:4px solid #12070c}
+
+.stage-unit[data-tier="3"] .goblin-banner,
+.stage-unit[data-tier="4"] .goblin-banner,
+.stage-unit[data-tier="5"] .goblin-banner,
+.stage-unit[data-tier="6"] .goblin-banner,
+.stage-unit[data-tier="5"] .goblin-camp,
+.stage-unit[data-tier="6"] .goblin-camp,
+.stage-unit[data-tier="3"] .bone-wall,
+.stage-unit[data-tier="4"] .bone-wall,
+.stage-unit[data-tier="5"] .bone-wall,
+.stage-unit[data-tier="6"] .bone-wall,
+.stage-unit[data-tier="2"] .witch-circle,
+.stage-unit[data-tier="3"] .witch-circle,
+.stage-unit[data-tier="4"] .witch-circle,
+.stage-unit[data-tier="5"] .witch-circle,
+.stage-unit[data-tier="6"] .witch-circle,
+.stage-unit[data-tier="2"] .necromancer-books,
+.stage-unit[data-tier="3"] .necromancer-books,
+.stage-unit[data-tier="4"] .necromancer-books,
+.stage-unit[data-tier="5"] .necromancer-books,
+.stage-unit[data-tier="6"] .necromancer-books{
+  opacity:1;
+}
+
+@media(max-width:1500px){
+  .main-game-layout{
+    grid-template-columns:clamp(240px,17vw,320px) minmax(680px,1fr) clamp(250px,18vw,310px);
+  }
+}
+
+@media(max-width:1200px){
+  .app-shell{
+    width:min(100% - 24px,1040px);
+  }
+
+  .main-game-layout{
+    grid-template-columns:1fr;
+  }
+
+  .main-game-layout>.empire-stage{
+    height:clamp(520px,68vh,760px);
+    min-height:clamp(520px,68vh,760px);
+  }
+}
+
+/* v0.3.6 final override: horizontal battle scene wins the cascade */
+.stage-ground .stage-road{
+  left:0;
+  right:0;
+  top:auto;
+  bottom:0;
+  width:100%;
+  height:32%;
+  transform:none;
+  border-left:0;
+  border-right:0;
+  border-top:8px solid #3b202a;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,65,95,.11) 0 3px,transparent 3px 70px),
+    repeating-linear-gradient(0deg,#21151a 0 9px,#170e12 9px 18px);
+  box-shadow:inset 0 16px 0 rgba(255,44,80,.1),0 -18px 44px rgba(255,37,73,.12);
+}
+
+.stage-unit[data-slot="monster-front-left"]{left:19%;right:auto;bottom:25%}
+.stage-unit[data-slot="monster-front-center"]{left:32%;right:auto;bottom:26%}
+.stage-unit[data-slot="monster-support-left"]{left:10%;right:auto;bottom:37%;opacity:.9;transform:scale(.86)}
+.stage-unit[data-slot="monster-support-back"]{left:24%;right:auto;bottom:41%;opacity:.86;transform:scale(.82)}
+.stage-unit[data-slot="prop-left"]{left:8%;right:auto;bottom:46%;opacity:.72;transform:scale(.74)}
+.stage-unit[data-slot="prop-center"]{left:42%;right:auto;bottom:38%;opacity:.78;transform:scale(.82)}
+.stage-unit[data-slot="prop-right"]{left:auto;right:12%;bottom:40%;opacity:.66;transform:scale(.72)}
+.stage-unit[data-slot="sky-dragon-slot"]{left:27%;right:auto;top:10%;bottom:auto;transform:none}
+.stage-unit[data-slot="background-portal-slot"]{left:auto;right:22%;bottom:38%;transform:none}
+.stage-unit[data-slot="background-lich-slot"]{left:39%;right:auto;bottom:37%;transform:none}
+.stage-unit[data-slot="background-god-slot"]{left:44%;right:auto;top:18%;bottom:auto;transform:none}
+
+.stage-hero.state-walking{
+  right:-10%;
+  bottom:25%!important;
+  animation:heroSideWalk 5.8s linear forwards;
+}
+
+@media(max-width:1200px){
+  .stage-ground .stage-road{height:34%}
+  .stage-unit[data-slot="monster-front-left"]{left:17%;bottom:26%}
+  .stage-unit[data-slot="monster-front-center"]{left:34%;bottom:27%}
+  .stage-hero.state-walking{bottom:26%!important}
+}

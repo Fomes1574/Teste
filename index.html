@@ -64,13 +64,40 @@
           <p>Pressione o círculo ritualístico para arrancar Almas do véu.</p>
         </div>
         <section id="empireStage" class="empire-stage" aria-label="Palco do Império">
-          <div class="stage-skyline"></div>
-          <div class="stage-village"></div>
-          <div class="stage-road"><span></span></div>
-          <div id="stageEffectsLayer" class="stage-effects-layer"></div>
-          <div id="heroLane" class="stage-hero-lane hero-lane"></div>
-          <div id="producerStage" class="stage-producer-layer producer-stage"></div>
-          <div class="stage-fog"></div>
+          <div class="stage-background">
+            <div class="stage-sky"></div>
+            <div class="stage-skyline"></div>
+            <div class="stage-village"></div>
+            <div class="stage-ruins"></div>
+          </div>
+          <div class="stage-ground">
+            <div class="stage-road"><span></span></div>
+          </div>
+          <div id="stagePropLayer" class="stage-prop-layer">
+            <div class="stage-slot prop-left"></div>
+            <div class="stage-slot prop-center"></div>
+            <div class="stage-slot prop-right"></div>
+            <div class="stage-slot sky-dragon-slot"></div>
+            <div class="stage-slot background-portal-slot"></div>
+            <div class="stage-slot background-lich-slot"></div>
+            <div class="stage-slot background-god-slot"></div>
+          </div>
+          <div id="producerStage" class="stage-monster-lane stage-producer-layer producer-stage">
+            <div class="stage-slot monster-front-left"></div>
+            <div class="stage-slot monster-front-center"></div>
+            <div class="stage-slot monster-support-left"></div>
+            <div class="stage-slot monster-support-back"></div>
+          </div>
+          <div id="heroLane" class="stage-enemy-lane stage-hero-lane hero-lane">
+            <div class="stage-slot enemy-front-right"></div>
+            <div class="stage-slot enemy-mid-right"></div>
+            <div class="stage-slot enemy-entry-right"></div>
+          </div>
+          <div class="stage-conflict-zone"></div>
+          <div id="stageEffectsLayer" class="stage-effect-layer stage-effects-layer"></div>
+          <div class="stage-overlay">
+            <div class="stage-fog"></div>
+          </div>
         </section>
         <aside class="message-panel">
           <h2>Crônica do Ritual</h2>
