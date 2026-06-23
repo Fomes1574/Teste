@@ -3,11 +3,13 @@ import { visualTierForQuantity } from './milestones.js';
 
 export function updateProducerStageTiers(state) {
   const stage = document.getElementById('producerStage');
+  const empireStage = document.getElementById('empireStage');
   if (!stage) return;
 
   for (const producer of PRODUCER_DEFINITIONS) {
     const quantity = state.producers[producer.id] || 0;
     const tier = visualTierForQuantity(quantity);
+    if (empireStage) empireStage.dataset[`${producer.id}Tier`] = String(Math.max(tier, 0));
     const existing = stage.querySelector(`[data-producer-visual="${producer.id}"]`);
 
     if (tier < 0) {

@@ -138,6 +138,16 @@ $('resetSave').addEventListener('click', () => {
 function spawnSoulBurst() {
   const ritual = $('ritualButton').getBoundingClientRect();
   spawnFloatingText('ALMA', ritual.left + ritual.width / 2, ritual.top + ritual.height / 2);
+  spawnStageBurst();
+}
+
+function spawnStageBurst() {
+  const layer = $('stageEffectsLayer');
+  if (!layer) return;
+  const burst = document.createElement('div');
+  burst.className = 'stage-burst';
+  layer.appendChild(burst);
+  setTimeout(() => burst.remove(), 750);
 }
 
 function spawnHero() {
