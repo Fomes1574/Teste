@@ -14,13 +14,14 @@ if (offline.gained > 0) showMessage(`Progresso offline: ${formatNumber(offline.g
 saveGame(state);
 preloadSprites().then(() => {
   renderProducerStage(state);
-  setTimeout(spawnHero, 700);
+  scheduleHeroRespawn(700, 700);
 });
 
 let lastFrame = performance.now();
 let eventAccumulator = 0;
 const $ = id => document.getElementById(id);
-let heroTimer = 0;
+let nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+let lastVisualAttacker = 'skeleton';
 let lastUpgradeVisibility = '';
 let wasBloodMoonActive = false;
 let lastVisualTierSignature = '';
@@ -50,6 +51,8 @@ function refreshAfterStructuralChange(message, { producersChanged = false } = {}
     lastVisualTierSignature = visualSignature;
   }
   lastUpgradeVisibility = upgradeVisibilitySignature(state);
+  if (!hasCombatPresence(state)) clearActiveHeroes();
+  else scheduleHeroRespawn(700, 1100);
   wasBloodMoonActive = Date.now() < state.bloodMoonUntil;
 }
 
@@ -155,32 +158,94 @@ function spawnStageBurst() {
   setTimeout(() => burst.remove(), 750);
 }
 
-function pulseStageUnit(producerId) {
-  const unit = document.querySelector(`[data-producer-visual="${producerId}"]`);
-  if (!unit) return;
-  unit.classList.add('unit-attack-pulse');
-  if (unit.dataset.renderer === 'sprite-sheet' && (producerId === 'goblin' || producerId === 'skeleton')) {
-    const layer = unit.querySelector('.sprite-sheet-layer');
-    const motion = unit.querySelector('.sprite-motion');
-    unit.dataset.state = 'attacking';
-    unit.classList.add('attacking');
-    layer?.addEventListener('animationend', event => {
-      if (event.target !== layer) return;
-      unit.classList.remove('attacking');
-      unit.dataset.state = 'returning';
-      motion?.addEventListener('animationend', motionEvent => {
-        if (motionEvent.target !== motion) return;
-        unit.dataset.state = 'idle';
-        unit.classList.remove('unit-attack-pulse');
-      }, { once: true });
-    }, { once: true });
-    return;
-  }
-  setTimeout(() => unit.classList.remove('unit-attack-pulse'), 520);
+function hasCombatPresence(currentState) {
+  return (currentState.producers.goblin || 0) > 0 || (currentState.producers.skeleton || 0) > 0;
 }
 
-function spawnHero() {
-  const lane = $('heroLane');
+function activeHero() {
+  return document.querySelector('.stage-hero[data-state="walking"], .stage-hero[data-state="fighting"], .stage-hero[data-state="hit"], .stage-hero[data-state="soul"]');
+}
+
+function clearActiveHeroes() {
+  document.querySelectorAll('.stage-hero').forEach(hero => hero.remove());
+  nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+}
+
+function scheduleHeroRespawn(minDelay = 2500, maxDelay = 4000) {
+  if (!hasCombatPresence(state) || activeHero()) return;
+  const delay = minDelay + Math.random() * Math.max(0, maxDelay - minDelay);
+  nextHeroSpawnAt = Math.min(nextHeroSpawnAt, performance.now() + delay);
+}
+
+function chooseVisualAttacker(currentState) {
+  const goblinAvailable = (currentState.producers.goblin || 0) > 0 && document.querySelector('[data-producer-visual="goblin"]');
+  const skeletonAvailable = (currentState.producers.skeleton || 0) > 0 && document.querySelector('[data-producer-visual="skeleton"]');
+  if (goblinAvailable && !skeletonAvailable) return 'goblin';
+  if (skeletonAvailable && !goblinAvailable) return 'skeleton';
+  if (goblinAvailable && skeletonAvailable) {
+    lastVisualAttacker = lastVisualAttacker === 'goblin' ? 'skeleton' : 'goblin';
+    return lastVisualAttacker;
+  }
+  return null;
+}
+
+const attackAnimationNames = {
+  goblin: { frame: 'spriteGoblinAttack', motion: 'goblinLunge' },
+  skeleton: { frame: 'spriteSkeletonAttack', motion: 'skeletonLunge' }
+};
+
+function pulseStageUnit(producerId) {
+  const unit = document.querySelector(`[data-producer-visual="${producerId}"]`);
+  if (!unit) return Promise.resolve(false);
+  unit.classList.add('unit-attack-pulse');
+  if (unit.dataset.renderer === 'sprite-sheet' && attackAnimationNames[producerId]) {
+    const layer = unit.querySelector('.sprite-sheet-layer');
+    const motion = unit.querySelector('.sprite-motion');
+    const names = attackAnimationNames[producerId];
+    if (!layer || !motion) {
+      unit.classList.remove('unit-attack-pulse');
+      return Promise.resolve(false);
+    }
+    unit.classList.remove('attacking');
+    unit.dataset.state = 'idle';
+    void unit.offsetWidth;
+    unit.dataset.state = 'attacking';
+    unit.classList.add('attacking');
+    return new Promise(resolve => {
+      let frameDone = false;
+      let motionDone = false;
+      const finishAttack = () => {
+        if (!frameDone || !motionDone) return;
+        unit.classList.remove('attacking');
+        unit.dataset.state = 'returning';
+        motion.addEventListener('animationend', returnEvent => {
+          if (returnEvent.target !== motion || returnEvent.animationName !== 'returnSettle') return;
+          unit.dataset.state = 'idle';
+          unit.classList.remove('unit-attack-pulse');
+          resolve(true);
+        }, { once: true });
+      };
+      layer.addEventListener('animationend', event => {
+        if (event.target !== layer || event.animationName !== names.frame) return;
+        frameDone = true;
+        finishAttack();
+      }, { once: true });
+      motion.addEventListener('animationend', event => {
+        if (event.target !== motion || event.animationName !== names.motion) return;
+        motionDone = true;
+        finishAttack();
+      }, { once: true });
+    });
+  }
+  return new Promise(resolve => {
+    setTimeout(() => {
+      unit.classList.remove('unit-attack-pulse');
+      resolve(true);
+    }, 520);
+  });
+}
+
+function createHeroElement() {
   const hero = document.createElement('div');
   const useKnightSprite = hasSprite('heroKnightWalk');
   const isKnight = useKnightSprite || Math.random() > 0.5;
@@ -192,29 +257,59 @@ function spawnHero() {
     : isKnight
       ? '<div class="sprite hero-knight-sprite"><span class="helmet"></span><span class="face"></span><span class="body"></span><span class="sword"></span><span class="shield"></span><span class="leg left"></span><span class="leg right"></span></div>'
       : '<div class="sprite hero-ranger-sprite"><span class="hood"></span><span class="face"></span><span class="body"></span><span class="bow"></span><span class="arrow"></span><span class="leg left"></span><span class="leg right"></span></div>';
-  lane.appendChild(hero);
+  hero.addEventListener('animationend', onHeroAnimationEnd);
+  return hero;
+}
+
+function trySpawnHero() {
+  if (!hasCombatPresence(state) || activeHero()) return false;
+  const lane = $('heroLane');
+  if (!lane) return false;
+  lane.appendChild(createHeroElement());
+  nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+  return true;
+}
+
+function onHeroAnimationEnd(event) {
+  const hero = event.currentTarget;
+  if (event.target !== hero || event.animationName !== 'heroSideWalk' || hero.dataset.state !== 'walking') return;
+  const attacker = chooseVisualAttacker(state);
+  if (!attacker) {
+    hero.dataset.state = 'removed';
+    hero.remove();
+    nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+    return;
+  }
+  hero.dataset.state = 'fighting';
+  hero.classList.remove('state-walking');
+  pulseStageUnit(attacker).then(attacked => {
+    if (!attacked || !hero.isConnected || hero.dataset.state !== 'fighting') return;
+    startHeroHit(hero);
+  });
+}
+
+function startHeroHit(hero) {
+  hero.dataset.state = 'hit';
+  hero.classList.add('state-hit');
+  const layer = hero.querySelector('.sprite-sheet-layer');
+  if (!layer || hero.dataset.renderer !== 'sprite-sheet' || !hasSprite('heroKnightHit')) {
+    beginHeroSoul(hero);
+    return;
+  }
+  layer.addEventListener('animationend', event => {
+    if (event.target !== layer || event.animationName !== 'spriteHeroHit' || hero.dataset.state !== 'hit') return;
+    beginHeroSoul(hero);
+  }, { once: true });
+}
+
+function beginHeroSoul(hero) {
+  hero.dataset.state = 'soul';
+  hero.classList.add('hero-soul');
   hero.addEventListener('animationend', event => {
-    if (event.target !== hero) return;
-    if (hero.dataset.renderer === 'sprite-sheet' && hasSprite('heroKnightHit')) {
-      hero.classList.remove('state-walking');
-      hero.classList.add('state-hit');
-      hero.dataset.state = 'hit';
-      hero.querySelector('.sprite-sheet-layer')?.addEventListener('animationend', () => {
-        hero.dataset.state = 'soul';
-        hero.classList.add('hero-soul');
-        setTimeout(() => {
-          hero.dataset.state = 'removed';
-          hero.remove();
-        }, 650);
-      }, { once: true });
-      return;
-    }
-    hero.dataset.state = 'soul';
-    hero.classList.add('hero-soul');
-    setTimeout(() => {
-      hero.dataset.state = 'removed';
-      hero.remove();
-    }, 650);
+    if (event.target !== hero || event.animationName !== 'heroSoulRise') return;
+    hero.dataset.state = 'removed';
+    hero.remove();
+    scheduleHeroRespawn(2500, 4000);
   }, { once: true });
 }
 
@@ -223,10 +318,8 @@ function loop(now) {
   lastFrame = now;
   addSouls(state, productionPerSecond(state) * delta);
   eventAccumulator += delta;
-  heroTimer += delta;
-  if (heroTimer >= 4 + Math.random() * 4) {
-    heroTimer = 0;
-    spawnHero();
+  if (now >= nextHeroSpawnAt) {
+    trySpawnHero();
   }
   if (eventAccumulator >= BLOOD_MOON_CONFIG.checkEverySeconds) {
     const elapsed = eventAccumulator;

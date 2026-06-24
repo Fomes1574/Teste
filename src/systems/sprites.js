@@ -1,4 +1,4 @@
-export const SPRITE_VERSION = 'v037b';
+export const SPRITE_VERSION = 'v037c';
 export const HERO_SPRITE_DIR = 'assets/sprites/heroes';
 
 export const SPRITE_PATHS = {
