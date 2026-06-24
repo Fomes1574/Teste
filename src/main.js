@@ -14,6 +14,7 @@ if (offline.gained > 0) showMessage(`Progresso offline: ${formatNumber(offline.g
 saveGame(state);
 preloadSprites().then(() => {
   renderProducerStage(state);
+  setTimeout(spawnHero, 700);
 });
 
 let lastFrame = performance.now();
@@ -159,10 +160,19 @@ function pulseStageUnit(producerId) {
   if (!unit) return;
   unit.classList.add('unit-attack-pulse');
   if (unit.dataset.renderer === 'sprite-sheet' && (producerId === 'goblin' || producerId === 'skeleton')) {
+    const layer = unit.querySelector('.sprite-sheet-layer');
+    const motion = unit.querySelector('.sprite-motion');
+    unit.dataset.state = 'attacking';
     unit.classList.add('attacking');
-    unit.querySelector('.sprite-sheet-layer')?.addEventListener('animationend', () => {
+    layer?.addEventListener('animationend', event => {
+      if (event.target !== layer) return;
       unit.classList.remove('attacking');
-      unit.classList.remove('unit-attack-pulse');
+      unit.dataset.state = 'returning';
+      motion?.addEventListener('animationend', motionEvent => {
+        if (motionEvent.target !== motion) return;
+        unit.dataset.state = 'idle';
+        unit.classList.remove('unit-attack-pulse');
+      }, { once: true });
     }, { once: true });
     return;
   }
@@ -176,24 +186,35 @@ function spawnHero() {
   const isKnight = useKnightSprite || Math.random() > 0.5;
   hero.className = `stage-hero pixel-hero ${isKnight ? 'hero-knight' : 'hero-ranger'} ${useKnightSprite ? 'sprite-sheet-unit sprite-hero-knight' : ''} state-walking`;
   hero.dataset.renderer = useKnightSprite ? 'sprite-sheet' : 'fallback';
+  hero.dataset.state = 'walking';
   hero.innerHTML = useKnightSprite
-    ? '<div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div>'
+    ? '<div class="sprite-motion"><div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div></div>'
     : isKnight
       ? '<div class="sprite hero-knight-sprite"><span class="helmet"></span><span class="face"></span><span class="body"></span><span class="sword"></span><span class="shield"></span><span class="leg left"></span><span class="leg right"></span></div>'
       : '<div class="sprite hero-ranger-sprite"><span class="hood"></span><span class="face"></span><span class="body"></span><span class="bow"></span><span class="arrow"></span><span class="leg left"></span><span class="leg right"></span></div>';
   lane.appendChild(hero);
-  hero.addEventListener('animationend', () => {
+  hero.addEventListener('animationend', event => {
+    if (event.target !== hero) return;
     if (hero.dataset.renderer === 'sprite-sheet' && hasSprite('heroKnightHit')) {
       hero.classList.remove('state-walking');
       hero.classList.add('state-hit');
+      hero.dataset.state = 'hit';
       hero.querySelector('.sprite-sheet-layer')?.addEventListener('animationend', () => {
+        hero.dataset.state = 'soul';
         hero.classList.add('hero-soul');
-        setTimeout(() => hero.remove(), 650);
+        setTimeout(() => {
+          hero.dataset.state = 'removed';
+          hero.remove();
+        }, 650);
       }, { once: true });
       return;
     }
+    hero.dataset.state = 'soul';
     hero.classList.add('hero-soul');
-    setTimeout(() => hero.remove(), 650);
+    setTimeout(() => {
+      hero.dataset.state = 'removed';
+      hero.remove();
+    }, 650);
   }, { once: true });
 }
 

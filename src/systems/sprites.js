@@ -1,4 +1,4 @@
-export const SPRITE_VERSION = 'v037';
+export const SPRITE_VERSION = 'v037b';
 export const HERO_SPRITE_DIR = 'assets/sprites/heroes';
 
 export const SPRITE_PATHS = {
@@ -21,6 +21,7 @@ function loadSprite([key, path]) {
   return new Promise(resolve => {
     const image = new Image();
     image.onload = () => {
+      console.info(`[sprites] carregado: ${path}`);
       availableSprites.add(key);
       resolve({ key, path, ok: true });
     };
