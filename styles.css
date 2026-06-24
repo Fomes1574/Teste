@@ -932,3 +932,144 @@ body[data-world-stage="stage-mid"] .mist{opacity:.58}body[data-world-stage="stag
 @keyframes spriteStripSkeletonAttack{from{transform:translateX(0)}to{transform:translateX(-512px)}}
 @keyframes spriteStripHeroWalk{from{transform:translateX(0)}to{transform:translateX(-512px)}}
 @keyframes spriteStripHeroHit{from{transform:translateX(0)}to{transform:translateX(-512px)}}
+
+
+/* v0.3.7b: sprite characters use a grounded viewport plus independent body motion */
+.stage-unit[data-renderer="sprite-sheet"],
+.stage-hero[data-renderer="sprite-sheet"]{
+  width:128px!important;
+  height:128px!important;
+  overflow:visible!important;
+  transform-origin:50% 100%;
+}
+
+.sprite-motion{
+  position:absolute;
+  left:50%;
+  bottom:0;
+  width:128px;
+  height:128px;
+  transform:translateX(-50%);
+  transform-origin:50% 100%;
+  will-change:transform;
+}
+
+.sprite-viewport{
+  left:0;
+  bottom:0;
+  width:128px;
+  height:128px;
+  overflow:hidden;
+  transform-origin:50% 100%;
+  transform:scale(var(--sprite-scale,1));
+  will-change:transform;
+}
+
+.stage-unit[data-renderer="sprite-sheet"].goblin,
+.stage-unit[data-renderer="sprite-sheet"].skeleton,
+.stage-hero[data-renderer="sprite-sheet"]{
+  --sprite-scale:1;
+}
+
+.stage-unit[data-renderer="sprite-sheet"][data-state="idle"].goblin .sprite-motion{
+  animation:goblinSpriteBreathe 1.45s ease-in-out infinite;
+}
+
+.stage-unit[data-renderer="sprite-sheet"][data-state="idle"].skeleton .sprite-motion{
+  animation:skeletonSpriteBreathe 1.65s ease-in-out infinite;
+}
+
+.stage-unit[data-renderer="sprite-sheet"][data-state="attacking"].goblin .sprite-motion{
+  animation:goblinSpriteAdvance .55s ease-out 1;
+}
+
+.stage-unit[data-renderer="sprite-sheet"][data-state="attacking"].skeleton .sprite-motion{
+  animation:skeletonSpriteAdvance .65s ease-out 1;
+}
+
+.stage-unit[data-renderer="sprite-sheet"][data-state="returning"] .sprite-motion{
+  animation:spriteReturnSettle .18s ease-in-out 1;
+}
+
+.sprite-goblin .sprite-sheet-layer{
+  background-image:url("assets/sprites/goblin/goblin-tier1-idle.png?v=v037b");
+  animation:spriteStripGoblinIdle .9s steps(4) infinite;
+}
+
+.sprite-goblin.attacking .sprite-sheet-layer{
+  background-image:url("assets/sprites/goblin/goblin-tier1-attack.png?v=v037b");
+  animation:spriteStripGoblinAttack .55s steps(4) 1;
+}
+
+.sprite-skeleton .sprite-sheet-layer{
+  background-image:url("assets/sprites/skeleton/skeleton-tier1-idle.png?v=v037b");
+  animation:spriteStripSkeletonIdle 1s steps(4) infinite;
+}
+
+.sprite-skeleton.attacking .sprite-sheet-layer{
+  background-image:url("assets/sprites/skeleton/skeleton-tier1-attack.png?v=v037b");
+  animation:spriteStripSkeletonAttack .65s steps(4) 1;
+}
+
+.sprite-hero-knight .sprite-sheet-layer{
+  background-image:url("assets/sprites/heroes/hero-knight-walk.png?v=v037b");
+  animation:spriteStripHeroWalk .75s steps(4) infinite;
+}
+
+.sprite-hero-knight.state-hit .sprite-sheet-layer,
+.sprite-hero-knight[data-state="hit"] .sprite-sheet-layer{
+  background-image:url("assets/sprites/heroes/hero-knight-hit.png?v=v037b");
+  animation:spriteStripHeroHit .65s steps(4) 1;
+}
+
+.stage-hero[data-renderer="sprite-sheet"].state-walking,
+.stage-hero[data-renderer="sprite-sheet"][data-state="walking"]{
+  left:auto!important;
+  right:-132px;
+  bottom:25%!important;
+  animation:heroKnightApproach 4.2s ease-in-out forwards;
+}
+
+.stage-hero[data-renderer="sprite-sheet"].state-hit,
+.stage-hero[data-renderer="sprite-sheet"][data-state="hit"]{
+  right:34%;
+  bottom:25%!important;
+  animation:none;
+}
+
+.stage-hero[data-renderer="sprite-sheet"].hero-soul,
+.stage-hero[data-renderer="sprite-sheet"][data-state="soul"]{
+  animation:soulFade .6s steps(4) forwards!important;
+}
+
+@keyframes goblinSpriteBreathe{
+  0%,100%{transform:translateX(-50%) translateY(0)}
+  50%{transform:translateX(-50%) translateY(-2px)}
+}
+
+@keyframes skeletonSpriteBreathe{
+  0%,100%{transform:translateX(-50%) translateY(0) rotate(0deg)}
+  50%{transform:translateX(-50%) translateY(-2px) rotate(-.7deg)}
+}
+
+@keyframes goblinSpriteAdvance{
+  0%{transform:translateX(-50%) translateY(0)}
+  45%{transform:translateX(calc(-50% + 10px)) translateY(-1px)}
+  100%{transform:translateX(-50%) translateY(0)}
+}
+
+@keyframes skeletonSpriteAdvance{
+  0%{transform:translateX(-50%) translateY(0)}
+  45%{transform:translateX(calc(-50% + 6px)) translateY(-1px)}
+  100%{transform:translateX(-50%) translateY(0)}
+}
+
+@keyframes spriteReturnSettle{
+  from{transform:translateX(-50%) translateY(0)}
+  to{transform:translateX(-50%) translateY(0)}
+}
+
+@keyframes heroKnightApproach{
+  0%{right:-132px;transform:translateY(0) scale(1)}
+  100%{right:34%;transform:translateY(0) scale(1)}
+}
