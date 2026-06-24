@@ -6,11 +6,15 @@ import { render, renderProducerList, renderProducerStage, renderUpgradeList, sho
 import { formatNumber } from './utils/format.js';
 import { createDefaultState } from './state.js';
 import { markMilestoneSeen, newlyReachedMilestones, visualTierSignature } from './systems/milestones.js';
+import { hasSprite, preloadSprites } from './systems/sprites.js';
 
 let state = loadGame();
 const offline = applyOfflineProgress(state);
 if (offline.gained > 0) showMessage(`Progresso offline: ${formatNumber(offline.gained)} Almas coletadas em ${Math.floor(offline.seconds / 60)} min.`);
 saveGame(state);
+preloadSprites().then(() => {
+  renderProducerStage(state);
+});
 
 let lastFrame = performance.now();
 let eventAccumulator = 0;
@@ -154,19 +158,40 @@ function pulseStageUnit(producerId) {
   const unit = document.querySelector(`[data-producer-visual="${producerId}"]`);
   if (!unit) return;
   unit.classList.add('unit-attack-pulse');
+  if (unit.dataset.renderer === 'sprite-sheet' && (producerId === 'goblin' || producerId === 'skeleton')) {
+    unit.classList.add('attacking');
+    unit.querySelector('.sprite-sheet-layer')?.addEventListener('animationend', () => {
+      unit.classList.remove('attacking');
+      unit.classList.remove('unit-attack-pulse');
+    }, { once: true });
+    return;
+  }
   setTimeout(() => unit.classList.remove('unit-attack-pulse'), 520);
 }
 
 function spawnHero() {
   const lane = $('heroLane');
   const hero = document.createElement('div');
-  const isKnight = Math.random() > 0.5;
-  hero.className = `stage-hero pixel-hero ${isKnight ? 'hero-knight' : 'hero-ranger'} state-walking`;
-  hero.innerHTML = isKnight
-    ? '<div class="sprite hero-knight-sprite"><span class="helmet"></span><span class="face"></span><span class="body"></span><span class="sword"></span><span class="shield"></span><span class="leg left"></span><span class="leg right"></span></div>'
-    : '<div class="sprite hero-ranger-sprite"><span class="hood"></span><span class="face"></span><span class="body"></span><span class="bow"></span><span class="arrow"></span><span class="leg left"></span><span class="leg right"></span></div>';
+  const useKnightSprite = hasSprite('heroKnightWalk');
+  const isKnight = useKnightSprite || Math.random() > 0.5;
+  hero.className = `stage-hero pixel-hero ${isKnight ? 'hero-knight' : 'hero-ranger'} ${useKnightSprite ? 'sprite-sheet-unit sprite-hero-knight' : ''} state-walking`;
+  hero.dataset.renderer = useKnightSprite ? 'sprite-sheet' : 'fallback';
+  hero.innerHTML = useKnightSprite
+    ? '<div class="sprite-sheet-layer" aria-hidden="true"></div>'
+    : isKnight
+      ? '<div class="sprite hero-knight-sprite"><span class="helmet"></span><span class="face"></span><span class="body"></span><span class="sword"></span><span class="shield"></span><span class="leg left"></span><span class="leg right"></span></div>'
+      : '<div class="sprite hero-ranger-sprite"><span class="hood"></span><span class="face"></span><span class="body"></span><span class="bow"></span><span class="arrow"></span><span class="leg left"></span><span class="leg right"></span></div>';
   lane.appendChild(hero);
   hero.addEventListener('animationend', () => {
+    if (hero.dataset.renderer === 'sprite-sheet' && hasSprite('heroKnightHit')) {
+      hero.classList.remove('state-walking');
+      hero.classList.add('state-hit');
+      hero.querySelector('.sprite-sheet-layer')?.addEventListener('animationend', () => {
+        hero.classList.add('hero-soul');
+        setTimeout(() => hero.remove(), 650);
+      }, { once: true });
+      return;
+    }
     hero.classList.add('hero-soul');
     setTimeout(() => hero.remove(), 650);
   }, { once: true });

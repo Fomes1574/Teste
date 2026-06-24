@@ -1,5 +1,6 @@
 import { PRODUCER_DEFINITIONS } from '../data/producers.js';
 import { getProducerVisualTier } from './milestones.js';
+import { hasSprite, producerSpriteKeys } from './sprites.js';
 
 const fallbackMarkup = {
   goblin: '<div class="sprite goblin-sprite"><span class="ear left"></span><span class="ear right"></span><span class="head"></span><span class="eye left"></span><span class="eye right"></span><span class="body"></span><span class="arm knife"></span><span class="arm sack"></span><span class="leg left"></span><span class="leg right"></span></div><div class="stage-prop goblin-banner"></div><div class="stage-prop goblin-camp"></div>',
@@ -8,6 +9,25 @@ const fallbackMarkup = {
   necromancer: '<div class="sprite necromancer-sprite"><span class="hood"></span><span class="mask"></span><span class="robe"></span><span class="staff"></span><span class="book"></span><span class="aura"></span></div><div class="stage-prop necromancer-books"></div>',
   default: '<div class="sprite monster-sprite"><span class="head"></span><span class="body"></span><span class="arm left"></span><span class="arm right"></span></div>'
 };
+
+function shouldUseSprite(producerId) {
+  const keys = producerSpriteKeys(producerId);
+  return keys ? hasSprite(keys.idle) : false;
+}
+
+function applyRenderer(element, producerId) {
+  const spriteEnabled = shouldUseSprite(producerId);
+  const renderer = spriteEnabled ? 'sprite-sheet' : 'fallback';
+  if (element.dataset.renderer === renderer) return;
+  element.dataset.renderer = renderer;
+  if (spriteEnabled) {
+    element.innerHTML = '<div class="sprite-sheet-layer" aria-hidden="true"></div>';
+    element.classList.add(`sprite-${producerId}`);
+    return;
+  }
+  element.innerHTML = fallbackMarkup[producerId] || fallbackMarkup.default;
+  element.classList.remove(`sprite-${producerId}`);
+}
 
 function visualPriority(state, producer) {
   const quantity = state.producers[producer.id] || 0;
@@ -63,9 +83,9 @@ export function updateProducerStageTiers(state) {
       element.dataset.state = 'idle';
       element.className = `stage-unit producer-visual pixel-sprite ${producer.id} ${producer.visualClass}`;
       element.title = producer.name;
-      element.innerHTML = fallbackMarkup[producer.id] || fallbackMarkup.default;
       stage.appendChild(element);
     }
+    applyRenderer(element, producer.id);
     element.dataset.tier = String(tier);
     const frontSlotIndex = frontProducerIds.indexOf(producer.id);
     const supportSlotIndex = supportProducerIds.indexOf(producer.id);

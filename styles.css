@@ -753,3 +753,84 @@ body[data-world-stage="stage-mid"] .mist{opacity:.58}body[data-world-stage="stag
   .stage-unit[data-slot="monster-front-center"]{left:34%;bottom:27%}
   .stage-hero.state-walking{bottom:26%!important}
 }
+
+/* v0.3.7: primeiro pacote de sprites reais 16-bit/chibi */
+.sprite-sheet-unit,
+.stage-unit[data-renderer="sprite-sheet"],
+.stage-hero[data-renderer="sprite-sheet"]{
+  image-rendering:pixelated;
+  background:none;
+  overflow:visible;
+}
+
+.sprite-sheet-layer{
+  position:absolute;
+  left:50%;
+  bottom:0;
+  width:100%;
+  height:100%;
+  transform:translateX(-50%);
+  transform-origin:50% 100%;
+  background-repeat:no-repeat;
+  background-size:400% 100%;
+  image-rendering:pixelated;
+  background-color:transparent;
+  filter:drop-shadow(0 7px 0 #050308) drop-shadow(0 0 8px rgba(0,0,0,.65));
+}
+
+.stage-unit[data-renderer="sprite-sheet"]{
+  width:112px;
+  height:112px;
+}
+
+.stage-unit[data-renderer="sprite-sheet"].goblin{
+  width:104px;
+  height:104px;
+}
+
+.stage-unit[data-renderer="sprite-sheet"].skeleton{
+  width:120px;
+  height:120px;
+}
+
+.stage-hero[data-renderer="sprite-sheet"]{
+  width:124px;
+  height:124px;
+}
+
+.sprite-goblin .sprite-sheet-layer{
+  background-image:url("assets/sprites/goblin/goblin-tier1-idle.png?v=v037");
+  animation:spriteGoblinIdle .9s steps(4) infinite;
+}
+
+.sprite-goblin.attacking .sprite-sheet-layer{
+  background-image:url("assets/sprites/goblin/goblin-tier1-attack.png?v=v037");
+  animation:spriteGoblinAttack .55s steps(4) 1;
+}
+
+.sprite-skeleton .sprite-sheet-layer{
+  background-image:url("assets/sprites/skeleton/skeleton-tier1-idle.png?v=v037");
+  animation:spriteSkeletonIdle 1s steps(4) infinite;
+}
+
+.sprite-skeleton.attacking .sprite-sheet-layer{
+  background-image:url("assets/sprites/skeleton/skeleton-tier1-attack.png?v=v037");
+  animation:spriteSkeletonAttack .65s steps(4) 1;
+}
+
+.sprite-hero-knight .sprite-sheet-layer{
+  background-image:url("assets/sprites/heroes/hero-knight-walk.png?v=v037");
+  animation:spriteHeroWalk .75s steps(4) infinite;
+}
+
+.sprite-hero-knight.state-hit .sprite-sheet-layer{
+  background-image:url("assets/sprites/heroes/hero-knight-hit.png?v=v037");
+  animation:spriteHeroHit .65s steps(4) 1;
+}
+
+@keyframes spriteGoblinIdle{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes spriteGoblinAttack{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes spriteSkeletonIdle{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes spriteSkeletonAttack{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes spriteHeroWalk{from{background-position-x:0}to{background-position-x:100%}}
+@keyframes spriteHeroHit{from{background-position-x:0}to{background-position-x:100%}}
