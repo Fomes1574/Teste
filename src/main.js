@@ -177,7 +177,7 @@ function spawnHero() {
   hero.className = `stage-hero pixel-hero ${isKnight ? 'hero-knight' : 'hero-ranger'} ${useKnightSprite ? 'sprite-sheet-unit sprite-hero-knight' : ''} state-walking`;
   hero.dataset.renderer = useKnightSprite ? 'sprite-sheet' : 'fallback';
   hero.innerHTML = useKnightSprite
-    ? '<div class="sprite-sheet-layer" aria-hidden="true"></div>'
+    ? '<div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div>'
     : isKnight
       ? '<div class="sprite hero-knight-sprite"><span class="helmet"></span><span class="face"></span><span class="body"></span><span class="sword"></span><span class="shield"></span><span class="leg left"></span><span class="leg right"></span></div>'
       : '<div class="sprite hero-ranger-sprite"><span class="hood"></span><span class="face"></span><span class="body"></span><span class="bow"></span><span class="arrow"></span><span class="leg left"></span><span class="leg right"></span></div>';

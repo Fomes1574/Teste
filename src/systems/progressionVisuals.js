@@ -15,18 +15,20 @@ function shouldUseSprite(producerId) {
   return keys ? hasSprite(keys.idle) : false;
 }
 
-function applyRenderer(element, producerId) {
-  const spriteEnabled = shouldUseSprite(producerId);
+function applyRenderer(element, producer) {
+  const spriteEnabled = shouldUseSprite(producer.id);
   const renderer = spriteEnabled ? 'sprite-sheet' : 'fallback';
   if (element.dataset.renderer === renderer) return;
   element.dataset.renderer = renderer;
   if (spriteEnabled) {
-    element.innerHTML = '<div class="sprite-sheet-layer" aria-hidden="true"></div>';
-    element.classList.add(`sprite-${producerId}`);
+    element.innerHTML = '<div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div>';
+    element.classList.remove(producer.visualClass, 'pixel-sprite');
+    element.classList.add('sprite-unit', `sprite-${producer.id}`);
     return;
   }
-  element.innerHTML = fallbackMarkup[producerId] || fallbackMarkup.default;
-  element.classList.remove(`sprite-${producerId}`);
+  element.innerHTML = fallbackMarkup[producer.id] || fallbackMarkup.default;
+  element.classList.remove('sprite-unit', `sprite-${producer.id}`);
+  element.classList.add('pixel-sprite', producer.visualClass);
 }
 
 function visualPriority(state, producer) {
@@ -85,7 +87,7 @@ export function updateProducerStageTiers(state) {
       element.title = producer.name;
       stage.appendChild(element);
     }
-    applyRenderer(element, producer.id);
+    applyRenderer(element, producer);
     element.dataset.tier = String(tier);
     const frontSlotIndex = frontProducerIds.indexOf(producer.id);
     const supportSlotIndex = supportProducerIds.indexOf(producer.id);
