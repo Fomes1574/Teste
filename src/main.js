@@ -25,6 +25,7 @@ let lastVisualAttacker = 'skeleton';
 let lastUpgradeVisibility = '';
 let wasBloodMoonActive = false;
 let lastVisualTierSignature = '';
+const DEBUG_COMBAT = false;
 
 function handleReachedMilestones() {
   const reached = newlyReachedMilestones(state);
@@ -158,6 +159,35 @@ function spawnStageBurst() {
   setTimeout(() => burst.remove(), 750);
 }
 
+function debugCombat(...args) {
+  if (DEBUG_COMBAT) console.info('[combat]', ...args);
+}
+
+function waitAnimationOrTimeout(element, expectedAnimationName, timeoutMs) {
+  return new Promise(resolve => {
+    if (!element) {
+      resolve({ completed: false, timedOut: true });
+      return;
+    }
+    let settled = false;
+    let timeoutId;
+    const finish = result => {
+      if (settled) return;
+      settled = true;
+      element.removeEventListener('animationend', onAnimationEnd);
+      clearTimeout(timeoutId);
+      resolve(result);
+    };
+    const onAnimationEnd = event => {
+      if (event.target !== element) return;
+      if (expectedAnimationName && event.animationName !== expectedAnimationName) return;
+      finish({ completed: true, timedOut: false });
+    };
+    element.addEventListener('animationend', onAnimationEnd);
+    timeoutId = setTimeout(() => finish({ completed: false, timedOut: true }), timeoutMs);
+  });
+}
+
 function hasCombatPresence(currentState) {
   return (currentState.producers.goblin || 0) > 0 || (currentState.producers.skeleton || 0) > 0;
 }
@@ -172,7 +202,11 @@ function clearActiveHeroes() {
 }
 
 function scheduleHeroRespawn(minDelay = 2500, maxDelay = 4000) {
-  if (!hasCombatPresence(state) || activeHero()) return;
+  if (!hasCombatPresence(state)) {
+    nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+    return;
+  }
+  if (activeHero()) return;
   const delay = minDelay + Math.random() * Math.max(0, maxDelay - minDelay);
   nextHeroSpawnAt = Math.min(nextHeroSpawnAt, performance.now() + delay);
 }
@@ -194,55 +228,43 @@ const attackAnimationNames = {
   skeleton: { frame: 'spriteSkeletonAttack', motion: 'skeletonLunge' }
 };
 
-function pulseStageUnit(producerId) {
+async function pulseStageUnit(producerId) {
   const unit = document.querySelector(`[data-producer-visual="${producerId}"]`);
-  if (!unit) return Promise.resolve(false);
+  if (!unit) return false;
   unit.classList.add('unit-attack-pulse');
-  if (unit.dataset.renderer === 'sprite-sheet' && attackAnimationNames[producerId]) {
-    const layer = unit.querySelector('.sprite-sheet-layer');
-    const motion = unit.querySelector('.sprite-motion');
-    const names = attackAnimationNames[producerId];
-    if (!layer || !motion) {
-      unit.classList.remove('unit-attack-pulse');
-      return Promise.resolve(false);
-    }
-    unit.classList.remove('attacking');
-    unit.dataset.state = 'idle';
-    void unit.offsetWidth;
-    unit.dataset.state = 'attacking';
-    unit.classList.add('attacking');
-    return new Promise(resolve => {
-      let frameDone = false;
-      let motionDone = false;
-      const finishAttack = () => {
-        if (!frameDone || !motionDone) return;
-        unit.classList.remove('attacking');
-        unit.dataset.state = 'returning';
-        motion.addEventListener('animationend', returnEvent => {
-          if (returnEvent.target !== motion || returnEvent.animationName !== 'returnSettle') return;
-          unit.dataset.state = 'idle';
-          unit.classList.remove('unit-attack-pulse');
-          resolve(true);
-        }, { once: true });
-      };
-      layer.addEventListener('animationend', event => {
-        if (event.target !== layer || event.animationName !== names.frame) return;
-        frameDone = true;
-        finishAttack();
-      }, { once: true });
-      motion.addEventListener('animationend', event => {
-        if (event.target !== motion || event.animationName !== names.motion) return;
-        motionDone = true;
-        finishAttack();
-      }, { once: true });
-    });
+  if (unit.dataset.renderer !== 'sprite-sheet' || !attackAnimationNames[producerId]) {
+    await waitAnimationOrTimeout(unit, null, 520);
+    unit.classList.remove('unit-attack-pulse');
+    return true;
   }
-  return new Promise(resolve => {
-    setTimeout(() => {
-      unit.classList.remove('unit-attack-pulse');
-      resolve(true);
-    }, 520);
-  });
+
+  const layer = unit.querySelector('.sprite-sheet-layer');
+  const motion = unit.querySelector('.sprite-motion');
+  const names = attackAnimationNames[producerId];
+  if (!layer || !motion) {
+    unit.classList.remove('unit-attack-pulse');
+    return false;
+  }
+
+  unit.classList.remove('attacking');
+  unit.dataset.state = 'idle';
+  void unit.offsetWidth;
+  unit.dataset.state = 'attacking';
+  unit.classList.add('attacking');
+  debugCombat('unit attack started', producerId);
+
+  const [frameResult, motionResult] = await Promise.allSettled([
+    waitAnimationOrTimeout(layer, names.frame, 750),
+    waitAnimationOrTimeout(motion, names.motion, 750)
+  ]);
+  debugCombat('unit attack finished', producerId, frameResult.value, motionResult.value);
+
+  unit.classList.remove('attacking');
+  unit.dataset.state = 'returning';
+  await waitAnimationOrTimeout(motion, 'returnSettle', 450);
+  unit.dataset.state = 'idle';
+  unit.classList.remove('unit-attack-pulse');
+  return true;
 }
 
 function createHeroElement() {
@@ -252,6 +274,7 @@ function createHeroElement() {
   hero.className = `stage-hero pixel-hero ${isKnight ? 'hero-knight' : 'hero-ranger'} ${useKnightSprite ? 'sprite-sheet-unit sprite-hero-knight' : ''} state-walking`;
   hero.dataset.renderer = useKnightSprite ? 'sprite-sheet' : 'fallback';
   hero.dataset.state = 'walking';
+  hero.dataset.spawnedAt = String(performance.now());
   hero.innerHTML = useKnightSprite
     ? '<div class="sprite-motion"><div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div></div>'
     : isKnight
@@ -261,56 +284,92 @@ function createHeroElement() {
   return hero;
 }
 
+function cleanupStaleHeroes() {
+  const now = performance.now();
+  let removed = false;
+  document.querySelectorAll('.stage-hero').forEach(hero => {
+    const spawnedAt = Number(hero.dataset.spawnedAt || now);
+    if (now - spawnedAt > 8000) {
+      debugCombat('removing stale hero', hero.dataset.state);
+      hero.dataset.state = 'removed';
+      hero.remove();
+      removed = true;
+    }
+  });
+  return removed;
+}
+
 function trySpawnHero() {
-  if (!hasCombatPresence(state) || activeHero()) return false;
+  if (!hasCombatPresence(state)) return false;
+  if (cleanupStaleHeroes()) {
+    scheduleHeroRespawn(2500, 4000);
+    return false;
+  }
+  if (activeHero()) return false;
   const lane = $('heroLane');
   if (!lane) return false;
   lane.appendChild(createHeroElement());
   nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+  debugCombat('hero spawned');
   return true;
 }
 
 function onHeroAnimationEnd(event) {
   const hero = event.currentTarget;
   if (event.target !== hero || event.animationName !== 'heroSideWalk' || hero.dataset.state !== 'walking') return;
+  debugCombat('hero arrived');
   const attacker = chooseVisualAttacker(state);
   if (!attacker) {
     hero.dataset.state = 'removed';
     hero.remove();
-    nextHeroSpawnAt = Number.POSITIVE_INFINITY;
+    if (hasCombatPresence(state)) scheduleHeroRespawn(2500, 4000);
     return;
   }
+  debugCombat('attacker chosen', attacker);
   hero.dataset.state = 'fighting';
+  hero.dataset.combatResolved = 'false';
   hero.classList.remove('state-walking');
-  pulseStageUnit(attacker).then(attacked => {
-    if (!attacked || !hero.isConnected || hero.dataset.state !== 'fighting') return;
-    startHeroHit(hero);
-  });
+  runHeroCombatSequence(hero, attacker);
 }
 
-function startHeroHit(hero) {
+async function runHeroCombatSequence(hero, attacker) {
+  let timeoutId;
+  const resolveCombat = reason => {
+    if (!hero.isConnected || hero.dataset.state !== 'fighting' || hero.dataset.combatResolved === 'true') return;
+    hero.dataset.combatResolved = 'true';
+    clearTimeout(timeoutId);
+    debugCombat(reason === 'timeout' ? 'combat timeout fallback' : 'attack finished', attacker);
+    startHeroHit(hero);
+  };
+  timeoutId = setTimeout(() => resolveCombat('timeout'), 1200);
+  await pulseStageUnit(attacker);
+  resolveCombat('attack');
+}
+
+async function startHeroHit(hero) {
+  if (!hero.isConnected || hero.dataset.state === 'soul' || hero.dataset.state === 'removed') return;
   hero.dataset.state = 'hit';
   hero.classList.add('state-hit');
+  debugCombat('hero hit');
   const layer = hero.querySelector('.sprite-sheet-layer');
-  if (!layer || hero.dataset.renderer !== 'sprite-sheet' || !hasSprite('heroKnightHit')) {
-    beginHeroSoul(hero);
-    return;
+  if (layer && hero.dataset.renderer === 'sprite-sheet' && hasSprite('heroKnightHit')) {
+    await waitAnimationOrTimeout(layer, 'spriteHeroHit', 850);
+  } else {
+    await waitAnimationOrTimeout(hero, null, 180);
   }
-  layer.addEventListener('animationend', event => {
-    if (event.target !== layer || event.animationName !== 'spriteHeroHit' || hero.dataset.state !== 'hit') return;
-    beginHeroSoul(hero);
-  }, { once: true });
+  beginHeroSoul(hero);
 }
 
-function beginHeroSoul(hero) {
+async function beginHeroSoul(hero) {
+  if (!hero.isConnected) return;
   hero.dataset.state = 'soul';
   hero.classList.add('hero-soul');
-  hero.addEventListener('animationend', event => {
-    if (event.target !== hero || event.animationName !== 'heroSoulRise') return;
-    hero.dataset.state = 'removed';
-    hero.remove();
-    scheduleHeroRespawn(2500, 4000);
-  }, { once: true });
+  await waitAnimationOrTimeout(hero, 'heroSoulRise', 950);
+  if (!hero.isConnected) return;
+  hero.dataset.state = 'removed';
+  hero.remove();
+  debugCombat('hero soul removed');
+  if (hasCombatPresence(state)) scheduleHeroRespawn(2500, 4000);
 }
 
 function loop(now) {
