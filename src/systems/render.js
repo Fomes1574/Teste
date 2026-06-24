@@ -34,6 +34,13 @@ function worldStage(state) {
   return 'stage-start';
 }
 
+function worldCorruption(state) {
+  const combatants = (state.producers.goblin || 0) + (state.producers.skeleton || 0);
+  if (state.totalSouls >= 25000 || combatants >= 25) return '2';
+  if (state.totalSouls >= 1000 || combatants >= 8) return '1';
+  return '0';
+}
+
 function updateMilestone(state) {
   const nextProducer = PRODUCER_DEFINITIONS.find(producer => state.almas < currentCost(producer, state) && state.producers[producer.id] === 0)
     || PRODUCER_DEFINITIONS.find(producer => state.almas < currentCost(producer, state));
@@ -75,6 +82,7 @@ export function updateResourceDisplays(state) {
 export function updateWorldVisuals(state) {
   document.body.classList.toggle('blood-moon-active', isBloodMoonActive(state));
   document.body.dataset.worldStage = worldStage(state);
+  document.body.dataset.worldCorruption = worldCorruption(state);
   $('eventBanner').hidden = !isBloodMoonActive(state);
   updateMilestone(state);
 }
