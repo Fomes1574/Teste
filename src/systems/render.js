@@ -1,6 +1,6 @@
 import { PRODUCER_DEFINITIONS } from '../data/producers.js';
 import { UPGRADE_DEFINITIONS } from '../data/upgrades.js';
-import { clickPower, currentCost, productionPerSecond } from './economy.js';
+import { clickPower, currentCost, producerBulkCost, productionPerSecond } from './economy.js';
 import { isBloodMoonActive } from './events.js';
 import { formatNumber } from '../utils/format.js';
 import { MILESTONE_UPGRADE_DEFINITIONS } from '../data/milestoneUpgrades.js';
@@ -8,6 +8,10 @@ import { nextMilestoneForProducer } from './milestones.js';
 import { updateProducerStageTiers } from './progressionVisuals.js';
 
 const $ = id => document.getElementById(id);
+
+function buttonPriceMarkup(label, cost) {
+  return `<span class="button-label">${label}</span><span class="button-cost">${formatNumber(cost)} Almas</span>`;
+}
 
 export function showMessage(text) {
   $('messageBox').textContent = text;
@@ -90,8 +94,11 @@ export function updateWorldVisuals(state) {
 export function renderProducerList(state) {
   $('producerList').innerHTML = PRODUCER_DEFINITIONS.map(producer => {
     const cost = currentCost(producer, state);
+    const cost1 = producerBulkCost(producer, state, 1);
+    const cost10 = producerBulkCost(producer, state, 10);
+    const cost100 = producerBulkCost(producer, state, 100);
     const quantity = state.producers[producer.id];
-    const canBuy = state.almas >= cost;
+    const canBuy = state.almas >= cost1;
     const nextMilestone = nextMilestoneForProducer(state, producer.id);
     const milestoneText = nextMilestone
       ? nextMilestone.unlock(state)
@@ -103,7 +110,7 @@ export function renderProducerList(state) {
       <p>${producer.flavor}</p>
       <dl><div><dt>Produção base</dt><dd>${formatNumber(producer.production)}/s</dd></div><div><dt>Custo atual</dt><dd>${formatNumber(cost)} Almas</dd></div></dl>
       <p class="next-producer-milestone">${milestoneText}</p>
-      <div class="card-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">Comprar 1</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">Comprar 10</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="100">Comprar 100</button><button type="button" data-buy-max="${producer.id}">Máximo</button></div>
+      <div class="card-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">${buttonPriceMarkup('Comprar 1', cost1)}</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">${buttonPriceMarkup('Comprar 10', cost10)}</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="100">${buttonPriceMarkup('Comprar 100', cost100)}</button><button type="button" data-buy-max="${producer.id}">Máximo</button></div>
     </article>`;
   }).join('');
 }
@@ -126,7 +133,7 @@ export function renderMilestoneUpgrades(state) {
     return `<article class="game-card milestone-upgrade-card ${canBuy ? 'affordable' : ''} ${bought ? 'owned' : ''}">
       <div class="card-top"><h3>${upgrade.name}</h3><span>${bought ? 'Obtido' : formatNumber(upgrade.cost)}</span></div>
       <p>${upgrade.description}</p>
-      <button type="button" data-buy-milestone-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : 'Comprar marco'}</button>
+      <button type="button" data-buy-milestone-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : buttonPriceMarkup('Comprar marco', upgrade.cost)}</button>
     </article>`;
   }).join('') : '<p class="empty-state">Compre monstros até 25/50/75/100+ para revelar Upgrades de Marco.</p>';
 }
@@ -139,7 +146,7 @@ export function renderUpgradeList(state) {
     return `<article class="game-card ${canBuy ? 'affordable' : ''} ${bought ? 'owned' : ''}">
       <div class="card-top"><h3>${upgrade.name}</h3><span>${bought ? 'Obtido' : formatNumber(upgrade.cost)}</span></div>
       <p>${upgrade.description}</p>
-      <button type="button" data-buy-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : 'Comprar upgrade'}</button>
+      <button type="button" data-buy-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : buttonPriceMarkup('Comprar upgrade', upgrade.cost)}</button>
     </article>`;
   }).join('') : '<p class="empty-state">Colete mais Almas ou compre produtores para revelar upgrades.</p>';
   $('upgradeList').innerHTML = `<h3 class="upgrade-section-title">Upgrades</h3>${regularHtml}<h3 class="upgrade-section-title">Upgrades de Marco</h3>${renderMilestoneUpgrades(state)}`;

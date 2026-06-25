@@ -7,6 +7,15 @@ export function currentCost(producer, state) {
   return producer.baseCost * Math.pow(producer.growth, state.producers[producer.id] || 0);
 }
 
+export function producerBulkCost(producer, state, amount) {
+  const currentQuantity = state.producers[producer.id] || 0;
+  let total = 0;
+  for (let index = 0; index < amount; index += 1) {
+    total += producer.baseCost * Math.pow(producer.growth, currentQuantity + index);
+  }
+  return total;
+}
+
 export function clickPower(state) {
   return 1 + UPGRADE_DEFINITIONS
     .filter(upgrade => upgrade.type === 'click' && state.upgrades.includes(upgrade.id))
