@@ -21,7 +21,8 @@ function applyRenderer(element, producer) {
   if (element.dataset.renderer === renderer) return;
   element.dataset.renderer = renderer;
   if (spriteEnabled) {
-    element.innerHTML = '<div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div>';
+    element.innerHTML = '<div class="sprite-motion"><div class="sprite-viewport"><div class="sprite-sheet-layer" aria-hidden="true"></div></div></div>';
+    element.dataset.state = 'idle';
     element.classList.remove(producer.visualClass, 'pixel-sprite');
     element.classList.add('sprite-unit', `sprite-${producer.id}`);
     return;
