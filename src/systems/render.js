@@ -1,6 +1,6 @@
 import { PRODUCER_DEFINITIONS } from '../data/producers.js';
 import { UPGRADE_DEFINITIONS } from '../data/upgrades.js';
-import { clickPower, currentCost, productionPerSecond } from './economy.js';
+import { clickPower, currentCost, producerBulkCost, producerProductionBreakdown, productionPerSecond } from './economy.js';
 import { isBloodMoonActive } from './events.js';
 import { formatNumber } from '../utils/format.js';
 import { MILESTONE_UPGRADE_DEFINITIONS } from '../data/milestoneUpgrades.js';
@@ -8,6 +8,46 @@ import { nextMilestoneForProducer } from './milestones.js';
 import { updateProducerStageTiers } from './progressionVisuals.js';
 
 const $ = id => document.getElementById(id);
+let lastHordeSummarySignature = '';
+
+function buttonPriceMarkup(label, cost) {
+  return `<span class="button-label">${label}</span><span class="button-cost">${formatNumber(cost)} Almas</span>`;
+}
+
+function productionShare(totalProduction, producerProduction) {
+  return totalProduction > 0 ? (producerProduction / totalProduction) * 100 : 0;
+}
+
+export function renderHordeSummary(state) {
+  const target = $('hordeSummary');
+  if (!target) return;
+  const breakdown = producerProductionBreakdown(state);
+  const totalMonsters = breakdown.reduce((total, producer) => total + producer.quantity, 0);
+  const totalProduction = breakdown.reduce((total, producer) => total + producer.totalProduction, 0);
+  const topProducer = breakdown.reduce((top, producer) => producer.totalProduction > top.totalProduction ? producer : top, { name: 'Nenhum', totalProduction: 0 });
+  const signature = breakdown
+    .map(producer => `${producer.id}:${producer.quantity}:${producer.totalProduction.toFixed(4)}`)
+    .join('|');
+  const fullSignature = `${totalMonsters}:${totalProduction.toFixed(4)}:${topProducer.name}:${signature}`;
+  if (fullSignature === lastHordeSummarySignature) return;
+  lastHordeSummarySignature = fullSignature;
+
+  const rows = breakdown.map(producer => {
+    const share = productionShare(totalProduction, producer.totalProduction);
+    return `<div class="horde-row">
+      <div class="horde-row-main"><strong>${producer.name}</strong><span>${formatNumber(producer.quantity)} un.</span></div>
+      <div class="horde-row-output"><span>${formatNumber(producer.totalProduction)}/s</span><span>${share > 0 ? `${share.toFixed(1)}%` : '0%'}</span></div>
+      <div class="horde-bar" aria-hidden="true"><span class="horde-bar-fill" style="--horde-share:${Math.min(100, share).toFixed(2)}%"></span></div>
+    </div>`;
+  }).join('');
+
+  target.innerHTML = `<div class="horde-summary-grid">
+    <article class="horde-stat"><span>Total de monstros</span><strong>${formatNumber(totalMonsters)}</strong></article>
+    <article class="horde-stat"><span>Produção da horda</span><strong>${formatNumber(totalProduction)}/s</strong></article>
+    <article class="horde-stat"><span>Maior produtor</span><strong>${topProducer.totalProduction > 0 ? topProducer.name : 'Nenhum'}</strong></article>
+  </div>
+  <div class="horde-breakdown">${rows}</div>`;
+}
 
 export function showMessage(text) {
   $('messageBox').textContent = text;
@@ -32,6 +72,13 @@ function worldStage(state) {
   if (state.totalSouls >= 25000 || state.producers.portal > 0 || state.producers.dragon > 0) return 'stage-greater';
   if (state.totalSouls >= 1000 || Object.values(state.producers).reduce((a, b) => a + b, 0) >= 15) return 'stage-mid';
   return 'stage-start';
+}
+
+function worldCorruption(state) {
+  const combatants = (state.producers.goblin || 0) + (state.producers.skeleton || 0);
+  if (state.totalSouls >= 25000 || combatants >= 25) return '2';
+  if (state.totalSouls >= 1000 || combatants >= 8) return '1';
+  return '0';
 }
 
 function updateMilestone(state) {
@@ -70,11 +117,13 @@ export function updateResourceDisplays(state) {
   $('spsDisplay').textContent = `${formatNumber(productionPerSecond(state))}/s`;
   $('spcDisplay').textContent = formatNumber(clickPower(state));
   $('blueFlamesDisplay').textContent = formatNumber(state.chamasAzuis);
+  renderHordeSummary(state);
 }
 
 export function updateWorldVisuals(state) {
   document.body.classList.toggle('blood-moon-active', isBloodMoonActive(state));
   document.body.dataset.worldStage = worldStage(state);
+  document.body.dataset.worldCorruption = worldCorruption(state);
   $('eventBanner').hidden = !isBloodMoonActive(state);
   updateMilestone(state);
 }
@@ -82,8 +131,11 @@ export function updateWorldVisuals(state) {
 export function renderProducerList(state) {
   $('producerList').innerHTML = PRODUCER_DEFINITIONS.map(producer => {
     const cost = currentCost(producer, state);
+    const cost1 = producerBulkCost(producer, state, 1);
+    const cost10 = producerBulkCost(producer, state, 10);
+    const cost100 = producerBulkCost(producer, state, 100);
     const quantity = state.producers[producer.id];
-    const canBuy = state.almas >= cost;
+    const canBuy = state.almas >= cost1;
     const nextMilestone = nextMilestoneForProducer(state, producer.id);
     const milestoneText = nextMilestone
       ? nextMilestone.unlock(state)
@@ -95,7 +147,7 @@ export function renderProducerList(state) {
       <p>${producer.flavor}</p>
       <dl><div><dt>Produção base</dt><dd>${formatNumber(producer.production)}/s</dd></div><div><dt>Custo atual</dt><dd>${formatNumber(cost)} Almas</dd></div></dl>
       <p class="next-producer-milestone">${milestoneText}</p>
-      <div class="card-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">Comprar 1</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">Comprar 10</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="100">Comprar 100</button><button type="button" data-buy-max="${producer.id}">Máximo</button></div>
+      <div class="card-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">${buttonPriceMarkup('Comprar x1', cost1)}</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">${buttonPriceMarkup('Comprar x10', cost10)}</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="100">${buttonPriceMarkup('Comprar x100', cost100)}</button><button type="button" data-buy-max="${producer.id}">Máximo</button></div>
     </article>`;
   }).join('');
 }
@@ -118,7 +170,7 @@ export function renderMilestoneUpgrades(state) {
     return `<article class="game-card milestone-upgrade-card ${canBuy ? 'affordable' : ''} ${bought ? 'owned' : ''}">
       <div class="card-top"><h3>${upgrade.name}</h3><span>${bought ? 'Obtido' : formatNumber(upgrade.cost)}</span></div>
       <p>${upgrade.description}</p>
-      <button type="button" data-buy-milestone-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : 'Comprar marco'}</button>
+      <button type="button" data-buy-milestone-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : buttonPriceMarkup('Comprar marco', upgrade.cost)}</button>
     </article>`;
   }).join('') : '<p class="empty-state">Compre monstros até 25/50/75/100+ para revelar Upgrades de Marco.</p>';
 }
@@ -131,7 +183,7 @@ export function renderUpgradeList(state) {
     return `<article class="game-card ${canBuy ? 'affordable' : ''} ${bought ? 'owned' : ''}">
       <div class="card-top"><h3>${upgrade.name}</h3><span>${bought ? 'Obtido' : formatNumber(upgrade.cost)}</span></div>
       <p>${upgrade.description}</p>
-      <button type="button" data-buy-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : 'Comprar upgrade'}</button>
+      <button type="button" data-buy-upgrade="${upgrade.id}" ${bought ? 'disabled' : ''}>${bought ? 'Comprado' : buttonPriceMarkup('Comprar upgrade', upgrade.cost)}</button>
     </article>`;
   }).join('') : '<p class="empty-state">Colete mais Almas ou compre produtores para revelar upgrades.</p>';
   $('upgradeList').innerHTML = `<h3 class="upgrade-section-title">Upgrades</h3>${regularHtml}<h3 class="upgrade-section-title">Upgrades de Marco</h3>${renderMilestoneUpgrades(state)}`;
@@ -149,6 +201,7 @@ export function render(state) {
   updateResourceDisplays(state);
   updateStatistics(state);
   updateWorldVisuals(state);
+  renderHordeSummary(state);
   renderProducerList(state);
   renderUpgradeList(state);
   renderProducerStage(state);
