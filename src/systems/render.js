@@ -49,10 +49,6 @@ export function renderHordeSummary(state) {
   <div class="horde-breakdown">${rows}</div>`;
 }
 
-function buttonPriceMarkup(label, cost) {
-  return `<span class="button-label">${label}</span><span class="button-cost">${formatNumber(cost)} Almas</span>`;
-}
-
 export function showMessage(text) {
   $('messageBox').textContent = text;
 }
