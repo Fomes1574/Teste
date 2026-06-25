@@ -1000,3 +1000,201 @@ body[data-world-corruption="5"] .empire-stage{filter:saturate(.82) brightness(.8
   .stage-hero[data-renderer="sprite-sheet"][data-state="walking"],
   .stage-hero[data-renderer="sprite-sheet"].state-walking{bottom:26%!important}
 }
+
+/* UX polish: aligned shop buttons, stable cards and lightweight premium depth */
+body{
+  background:
+    radial-gradient(circle at 14% 8%,rgba(255,59,91,.12),transparent 26%),
+    radial-gradient(circle at 86% 12%,rgba(255,206,101,.08),transparent 24%),
+    linear-gradient(180deg,#0b0711 0%,#050307 58%,#09050b 100%);
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  background:linear-gradient(120deg,transparent 0 28%,rgba(255,216,129,.035) 42%,transparent 56% 100%);
+  opacity:.75;
+}
+.glass-panel{
+  border-color:rgba(255,104,126,.22);
+  box-shadow:0 0 0 4px rgba(7,5,10,.88),0 26px 72px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,220,160,.06);
+}
+.resource-bar article,
+.statistics-grid article{
+  background:linear-gradient(180deg,rgba(255,226,160,.055),rgba(255,255,255,.025));
+  border-color:rgba(255,214,129,.14);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+}
+.tab-button.active{
+  border-color:rgba(255,214,129,.55);
+  box-shadow:inset 0 0 18px rgba(255,214,129,.12),0 0 18px rgba(255,47,79,.22);
+}
+.game-card{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.game-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,214,129,.34);
+  box-shadow:0 16px 36px rgba(0,0,0,.34),0 0 20px rgba(255,45,72,.08);
+}
+.game-card.affordable{
+  box-shadow:0 0 0 1px rgba(255,214,129,.18),0 0 22px rgba(216,177,93,.13),0 12px 32px rgba(0,0,0,.26);
+}
+.card-top{
+  min-height:48px;
+  align-items:flex-start;
+}
+.card-top h3{
+  line-height:1.1;
+}
+.game-card p{
+  min-height:58px;
+}
+.game-card dl{
+  min-height:58px;
+}
+.next-producer-milestone{
+  min-height:54px;
+}
+.card-actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px;
+  align-items:stretch;
+  margin-top:auto;
+}
+.card-actions button,
+.game-card>button{
+  width:100%;
+  min-width:0;
+  min-height:74px;
+  height:74px;
+  padding:8px 6px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  line-height:1.1;
+  text-align:center;
+}
+.card-actions button:hover,
+.game-card>button:hover,
+.import-label:hover{
+  border-color:rgba(255,214,129,.58);
+  box-shadow:inset 0 0 16px rgba(255,214,129,.08),inset -4px -4px 0 rgba(0,0,0,.28),0 0 16px rgba(255,45,72,.18);
+}
+.button-label{
+  white-space:nowrap;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:.86rem;
+  letter-spacing:.01em;
+}
+.button-cost{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  overflow-wrap:normal;
+  line-height:1.05;
+  font-size:.74rem;
+}
+.horde-summary{
+  margin:12px 0 18px;
+  padding:14px;
+  border:3px solid rgba(255,91,118,.2);
+  background:linear-gradient(180deg,rgba(33,18,30,.92),rgba(12,8,13,.9));
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.22),0 14px 34px rgba(0,0,0,.3);
+}
+.horde-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.horde-stat{
+  padding:11px;
+  border:2px solid rgba(255,214,129,.18);
+  background:rgba(255,255,255,.035);
+}
+.horde-stat span{
+  display:block;
+  color:#b9a8b2;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.horde-stat strong{
+  display:block;
+  margin-top:4px;
+  color:#ffd681;
+  font-family:Georgia,serif;
+  line-height:1.12;
+}
+.horde-breakdown{
+  display:grid;
+  gap:8px;
+}
+.horde-row{
+  display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(96px,.8fr);
+  gap:8px 12px;
+  align-items:center;
+  padding:9px 10px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(5,3,7,.32);
+}
+.horde-row-main,
+.horde-row-output{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+}
+.horde-row-main strong{
+  color:#ffe0a3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.horde-row-main span,
+.horde-row-output span{
+  color:#cbb9c4;
+  white-space:nowrap;
+}
+.horde-row-output span:first-child{color:#fff}
+.horde-bar{
+  grid-column:1/-1;
+  height:6px;
+  background:#170d16;
+  border:1px solid rgba(255,255,255,.06);
+  overflow:hidden;
+}
+.horde-bar-fill{
+  display:block;
+  width:var(--horde-share,0%);
+  height:100%;
+  background:linear-gradient(90deg,#ff294d,#ffd681);
+  box-shadow:0 0 12px rgba(255,87,111,.45);
+}
+@media(max-width:760px){
+  .horde-summary-grid{grid-template-columns:1fr}
+  .horde-row{grid-template-columns:1fr}
+  .card-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .card-actions button,.game-card>button{min-height:70px;height:70px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.001ms!important;
+    scroll-behavior:auto!important;
+  }
+}
