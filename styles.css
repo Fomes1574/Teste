@@ -1198,3 +1198,161 @@ body::before{
     scroll-behavior:auto!important;
   }
 }
+
+/* v0.4 Cockpit Idle da Horda */
+.main-game-layout{
+  grid-template-columns:minmax(240px,23%) minmax(620px,1fr) minmax(260px,21%);
+  align-items:start;
+}
+.stage-area{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-width:0;
+}
+.stage-area>.empire-stage{
+  width:100%;
+}
+.message-panel{
+  align-self:stretch;
+}
+.horde-summary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin:10px 0 14px;
+  padding:10px;
+}
+.horde-compact-stat{
+  padding:8px;
+  border:1px solid rgba(255,214,129,.16);
+  background:rgba(255,255,255,.028);
+  min-width:0;
+}
+.horde-compact-stat span{
+  display:block;
+  color:#b9a8b2;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.horde-compact-stat strong{
+  display:block;
+  margin-top:3px;
+  color:#ffd681;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.main-horde-dock{
+  padding:12px;
+  border:3px solid rgba(255,91,118,.24);
+  background:linear-gradient(180deg,rgba(30,17,29,.94),rgba(10,7,12,.92));
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.24),0 16px 34px rgba(0,0,0,.34);
+  min-width:0;
+}
+.dock-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.dock-header span,
+.dock-header em{
+  color:#b9a8b2;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-style:normal;
+}
+.dock-header strong{
+  display:block;
+  color:#ffd681;
+  font-family:Georgia,serif;
+  margin-top:2px;
+}
+.dock-producer-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+}
+.dock-producer{
+  padding:10px;
+  border:2px solid rgba(255,255,255,.08);
+  background:rgba(5,3,7,.34);
+  min-width:0;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease;
+}
+.dock-producer:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,214,129,.34);
+  background:rgba(255,255,255,.045);
+}
+.dock-producer.is-affordable{
+  border-color:rgba(255,214,129,.34);
+  box-shadow:inset 0 0 14px rgba(255,214,129,.06);
+}
+.dock-producer-main,
+.dock-producer-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.dock-producer-main strong{
+  color:#ffe0a3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.dock-producer-main span,
+.dock-producer-meta span{
+  color:#cbb9c4;
+  white-space:nowrap;
+  font-size:.82rem;
+}
+.dock-producer-meta{margin-top:5px}
+.dock-producer-meta span:first-child{color:#fff}
+.dock-actions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+  margin-top:9px;
+}
+.dock-actions button{
+  min-width:0;
+  min-height:44px;
+  padding:5px 4px;
+  font-size:.74rem;
+  line-height:1.05;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.dock-actions button span{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#ffd681;
+  font-size:.72em;
+}
+@media(max-width:1180px){
+  .main-game-layout{grid-template-columns:1fr}
+  .stage-area{order:2}
+  .ritual-card{order:1}
+  .message-panel{order:3}
+}
+@media(max-width:760px){
+  .horde-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dock-header{align-items:flex-start;flex-direction:column}
+  .dock-producer-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}
+  .dock-producer{min-width:220px;scroll-snap-align:start}
+}

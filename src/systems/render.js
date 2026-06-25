@@ -9,6 +9,7 @@ import { updateProducerStageTiers } from './progressionVisuals.js';
 
 const $ = id => document.getElementById(id);
 let lastHordeSummarySignature = '';
+let lastMainHordeDockSignature = '';
 
 function buttonPriceMarkup(label, cost) {
   return `<span class="button-label">${label}</span><span class="button-cost">${formatNumber(cost)} Almas</span>`;
@@ -18,35 +19,77 @@ function productionShare(totalProduction, producerProduction) {
   return totalProduction > 0 ? (producerProduction / totalProduction) * 100 : 0;
 }
 
-export function renderHordeSummary(state) {
-  const target = $('hordeSummary');
-  if (!target) return;
+function hordeTotals(state) {
   const breakdown = producerProductionBreakdown(state);
   const totalMonsters = breakdown.reduce((total, producer) => total + producer.quantity, 0);
   const totalProduction = breakdown.reduce((total, producer) => total + producer.totalProduction, 0);
   const topProducer = breakdown.reduce((top, producer) => producer.totalProduction > top.totalProduction ? producer : top, { name: 'Nenhum', totalProduction: 0 });
-  const signature = breakdown
-    .map(producer => `${producer.id}:${producer.quantity}:${producer.totalProduction.toFixed(4)}`)
-    .join('|');
-  const fullSignature = `${totalMonsters}:${totalProduction.toFixed(4)}:${topProducer.name}:${signature}`;
-  if (fullSignature === lastHordeSummarySignature) return;
-  lastHordeSummarySignature = fullSignature;
+  return { breakdown, totalMonsters, totalProduction, topProducer };
+}
 
-  const rows = breakdown.map(producer => {
-    const share = productionShare(totalProduction, producer.totalProduction);
-    return `<div class="horde-row">
-      <div class="horde-row-main"><strong>${producer.name}</strong><span>${formatNumber(producer.quantity)} un.</span></div>
-      <div class="horde-row-output"><span>${formatNumber(producer.totalProduction)}/s</span><span>${share > 0 ? `${share.toFixed(1)}%` : '0%'}</span></div>
-      <div class="horde-bar" aria-hidden="true"><span class="horde-bar-fill" style="--horde-share:${Math.min(100, share).toFixed(2)}%"></span></div>
-    </div>`;
+function hordeSignature(breakdown, totalMonsters, totalProduction, topProducer, prefix = '') {
+  const producerSignature = breakdown
+    .map(producer => `${producer.id}:${producer.quantity}:${producer.totalProduction.toFixed(3)}`)
+    .join('|');
+  return `${prefix}${totalMonsters}:${totalProduction.toFixed(3)}:${topProducer.name}:${producerSignature}`;
+}
+
+export function renderHordeSummary(state) {
+  const target = $('hordeSummary');
+  if (!target) return;
+  const { breakdown, totalMonsters, totalProduction, topProducer } = hordeTotals(state);
+  const activeTypes = breakdown.filter(producer => producer.quantity > 0).length;
+  const signature = hordeSignature(breakdown, totalMonsters, totalProduction, topProducer, 'compact:');
+  if (signature === lastHordeSummarySignature) return;
+  lastHordeSummarySignature = signature;
+
+  target.innerHTML = `<div class="horde-compact-stat"><span>Total</span><strong>${formatNumber(totalMonsters)}</strong></div>
+    <div class="horde-compact-stat"><span>Tipos ativos</span><strong>${formatNumber(activeTypes)}</strong></div>
+    <div class="horde-compact-stat"><span>Produção</span><strong>${formatNumber(totalProduction)}/s</strong></div>
+    <div class="horde-compact-stat"><span>Maior</span><strong>${topProducer.totalProduction > 0 ? topProducer.name : 'Nenhum'}</strong></div>`;
+}
+
+function relevantDockProducers(state, breakdown) {
+  const byId = new Map(breakdown.map(item => [item.id, item]));
+  return PRODUCER_DEFINITIONS
+    .map((producer, index) => {
+      const quantity = state.producers[producer.id] || 0;
+      const nextCost = currentCost(producer, state);
+      const breakdownItem = byId.get(producer.id);
+      const ownedScore = quantity > 0 ? 100000 : 0;
+      const affordableScore = state.almas >= nextCost ? 10000 : 0;
+      const proximityScore = quantity === 0 && state.almas < nextCost ? Math.max(0, 1000 - (nextCost - state.almas) / Math.max(1, nextCost) * 1000) : 0;
+      const productionScore = breakdownItem?.totalProduction || 0;
+      return { producer, index, quantity, nextCost, score: ownedScore + affordableScore + proximityScore + productionScore };
+    })
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 6);
+}
+
+export function renderMainHordeDock(state) {
+  const target = $('mainHordeDock');
+  if (!target) return;
+  const { breakdown, totalMonsters, totalProduction, topProducer } = hordeTotals(state);
+  const selected = relevantDockProducers(state, breakdown);
+  const signature = `${hordeSignature(breakdown, totalMonsters, totalProduction, topProducer, 'dock:')}|${selected.map(item => `${item.producer.id}:${item.nextCost.toFixed(2)}:${state.almas >= item.nextCost ? '1' : '0'}`).join('|')}`;
+  if (signature === lastMainHordeDockSignature) return;
+  lastMainHordeDockSignature = signature;
+  const byId = new Map(breakdown.map(item => [item.id, item]));
+  const cards = selected.map(({ producer }) => {
+    const item = byId.get(producer.id);
+    const quantity = item?.quantity || 0;
+    const total = item?.totalProduction || 0;
+    const cost1 = producerBulkCost(producer, state, 1);
+    const cost10 = producerBulkCost(producer, state, 10);
+    const affordable = state.almas >= cost1;
+    return `<article class="dock-producer ${affordable ? 'is-affordable' : ''}">
+      <div class="dock-producer-main"><strong>${producer.name}</strong><span>${formatNumber(quantity)} un.</span></div>
+      <div class="dock-producer-meta"><span>${formatNumber(total)}/s</span><span>Próx. ${formatNumber(cost1)}</span></div>
+      <div class="dock-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">x1<span>${formatNumber(cost1)}</span></button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">x10<span>${formatNumber(cost10)}</span></button><button type="button" data-buy-max="${producer.id}">Máx.</button></div>
+    </article>`;
   }).join('');
 
-  target.innerHTML = `<div class="horde-summary-grid">
-    <article class="horde-stat"><span>Total de monstros</span><strong>${formatNumber(totalMonsters)}</strong></article>
-    <article class="horde-stat"><span>Produção da horda</span><strong>${formatNumber(totalProduction)}/s</strong></article>
-    <article class="horde-stat"><span>Maior produtor</span><strong>${topProducer.totalProduction > 0 ? topProducer.name : 'Nenhum'}</strong></article>
-  </div>
-  <div class="horde-breakdown">${rows}</div>`;
+  target.innerHTML = `<div class="dock-header"><div><span>Cockpit da Horda</span><strong>${formatNumber(totalMonsters)} monstros · ${formatNumber(totalProduction)}/s</strong></div><em>Maior: ${topProducer.totalProduction > 0 ? topProducer.name : 'Nenhum'}</em></div><div class="dock-producer-grid">${cards}</div>`;
 }
 
 export function showMessage(text) {
@@ -118,6 +161,7 @@ export function updateResourceDisplays(state) {
   $('spcDisplay').textContent = formatNumber(clickPower(state));
   $('blueFlamesDisplay').textContent = formatNumber(state.chamasAzuis);
   renderHordeSummary(state);
+  renderMainHordeDock(state);
 }
 
 export function updateWorldVisuals(state) {
@@ -129,11 +173,13 @@ export function updateWorldVisuals(state) {
 }
 
 export function renderProducerList(state) {
+  const productionById = new Map(producerProductionBreakdown(state).map(item => [item.id, item]));
   $('producerList').innerHTML = PRODUCER_DEFINITIONS.map(producer => {
     const cost = currentCost(producer, state);
     const cost1 = producerBulkCost(producer, state, 1);
     const cost10 = producerBulkCost(producer, state, 10);
     const cost100 = producerBulkCost(producer, state, 100);
+    const production = productionById.get(producer.id);
     const quantity = state.producers[producer.id];
     const canBuy = state.almas >= cost1;
     const nextMilestone = nextMilestoneForProducer(state, producer.id);
@@ -145,7 +191,7 @@ export function renderProducerList(state) {
     return `<article class="game-card ${canBuy ? 'affordable' : ''}" data-producer-card="${producer.id}">
       <div class="card-top"><h3>${producer.name}</h3><span>${formatNumber(quantity)}</span></div>
       <p>${producer.flavor}</p>
-      <dl><div><dt>Produção base</dt><dd>${formatNumber(producer.production)}/s</dd></div><div><dt>Custo atual</dt><dd>${formatNumber(cost)} Almas</dd></div></dl>
+      <dl><div><dt>Produção base</dt><dd>${formatNumber(producer.production)}/s</dd></div><div><dt>Produção atual</dt><dd>${formatNumber(quantity > 0 ? (production?.totalProduction || 0) / quantity : producer.production * (production?.producerMultiplier || 1) * (production?.globalMultiplier || 1) * (production?.bloodMoonMultiplier || 1))}/s cada</dd></div><div><dt>Total atual</dt><dd>${formatNumber(production?.totalProduction || 0)}/s</dd></div><div><dt>Custo atual</dt><dd>${formatNumber(cost)} Almas</dd></div></dl>
       <p class="next-producer-milestone">${milestoneText}</p>
       <div class="card-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">${buttonPriceMarkup('Comprar x1', cost1)}</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">${buttonPriceMarkup('Comprar x10', cost10)}</button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="100">${buttonPriceMarkup('Comprar x100', cost100)}</button><button type="button" data-buy-max="${producer.id}">Máximo</button></div>
     </article>`;
@@ -202,6 +248,7 @@ export function render(state) {
   updateStatistics(state);
   updateWorldVisuals(state);
   renderHordeSummary(state);
+  renderMainHordeDock(state);
   renderProducerList(state);
   renderUpgradeList(state);
   renderProducerStage(state);
