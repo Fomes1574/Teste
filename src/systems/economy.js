@@ -7,28 +7,63 @@ export function currentCost(producer, state) {
   return producer.baseCost * Math.pow(producer.growth, state.producers[producer.id] || 0);
 }
 
+export function producerBulkCost(producer, state, amount) {
+  const currentQuantity = state.producers[producer.id] || 0;
+  let total = 0;
+  for (let index = 0; index < amount; index += 1) {
+    total += producer.baseCost * Math.pow(producer.growth, currentQuantity + index);
+  }
+  return total;
+}
+
 export function clickPower(state) {
   return 1 + UPGRADE_DEFINITIONS
     .filter(upgrade => upgrade.type === 'click' && state.upgrades.includes(upgrade.id))
     .reduce((sum, upgrade) => sum + upgrade.amount, 0);
 }
 
-export function productionPerSecond(state, now = Date.now()) {
-  let total = 0;
-  for (const producer of PRODUCER_DEFINITIONS) {
-    const producerMultiplier = UPGRADE_DEFINITIONS
-      .filter(upgrade => upgrade.type === 'producer' && upgrade.producerId === producer.id && state.upgrades.includes(upgrade.id))
-      .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1)
-      * MILESTONE_UPGRADE_DEFINITIONS
-        .filter(upgrade => upgrade.producerId === producer.id && state.milestoneUpgrades.includes(upgrade.id))
-        .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1);
-    total += (state.producers[producer.id] || 0) * producer.production * producerMultiplier;
-  }
-  total *= UPGRADE_DEFINITIONS
+function producerMultiplierFor(producer, state) {
+  return UPGRADE_DEFINITIONS
+    .filter(upgrade => upgrade.type === 'producer' && upgrade.producerId === producer.id && state.upgrades.includes(upgrade.id))
+    .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1)
+    * MILESTONE_UPGRADE_DEFINITIONS
+      .filter(upgrade => upgrade.producerId === producer.id && state.milestoneUpgrades.includes(upgrade.id))
+      .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1);
+}
+
+function globalProductionMultiplier(state) {
+  return UPGRADE_DEFINITIONS
     .filter(upgrade => upgrade.type === 'global' && state.upgrades.includes(upgrade.id))
     .reduce((multiplier, upgrade) => multiplier * upgrade.multiplier, 1);
-  if (now < state.bloodMoonUntil) total *= BLOOD_MOON_CONFIG.multiplier;
-  return total;
+}
+
+function bloodMoonMultiplier(state, now = Date.now()) {
+  return now < state.bloodMoonUntil ? BLOOD_MOON_CONFIG.multiplier : 1;
+}
+
+export function producerProductionBreakdown(state, now = Date.now()) {
+  const globalMultiplier = globalProductionMultiplier(state);
+  const moonMultiplier = bloodMoonMultiplier(state, now);
+  return PRODUCER_DEFINITIONS.map(producer => {
+    const quantity = state.producers[producer.id] || 0;
+    const producerMultiplier = producerMultiplierFor(producer, state);
+    const baseProduction = quantity * producer.production;
+    return {
+      id: producer.id,
+      name: producer.name,
+      quantity,
+      baseProduction,
+      producerMultiplier,
+      globalMultiplier,
+      bloodMoonMultiplier: moonMultiplier,
+      totalProduction: baseProduction * producerMultiplier * globalMultiplier * moonMultiplier
+    };
+  });
+}
+
+export function productionPerSecond(state, now = Date.now()) {
+  return producerProductionBreakdown(state, now)
+    .reduce((total, producer) => total + producer.totalProduction, 0);
 }
 
 export function addSouls(state, amount) {

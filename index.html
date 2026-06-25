@@ -58,11 +58,11 @@
               </svg>
             </span>
             <span class="ritual-rune-orbit">ᚱ ᛟ ᚾ ᛃ ᛉ ᚲ ᚨ ᛗ ᛞ ᛇ</span>
-            <span class="ritual-core-pulse">✦</span>
             <span class="ritual-particles" aria-hidden="true"></span>
           </button>
           <p>Pressione o círculo ritualístico para arrancar Almas do véu.</p>
         </div>
+        <div class="stage-area">
         <section id="empireStage" class="empire-stage" aria-label="Palco do Império">
           <div class="stage-background">
             <div class="stage-sky"></div>
@@ -99,6 +99,8 @@
             <div class="stage-fog"></div>
           </div>
         </section>
+        <section id="mainHordeDock" class="main-horde-dock" aria-label="Cockpit da Horda"></section>
+        </div>
         <aside class="message-panel">
           <h2>Crônica do Ritual</h2>
           <div id="messageBox" class="message-box" role="status" aria-live="polite">O selo aguarda sua primeira Alma.</div>
@@ -113,6 +115,7 @@
 
     <section id="monsters" class="tab-panel glass-panel">
       <div class="section-title"><h2>Monstros produtores</h2><p>Invocações automáticas. O custo usa: custo base × crescimento ^ quantidade.</p></div>
+      <div id="hordeSummary" class="horde-summary"></div>
       <div id="producerList" class="card-grid"></div>
     </section>
 
