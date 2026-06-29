@@ -66,9 +66,14 @@ export function productionPerSecond(state, now = Date.now()) {
     .reduce((total, producer) => total + producer.totalProduction, 0);
 }
 
-export function addSouls(state, amount) {
+export function addSouls(state, amount, source = 'unknown') {
   state.almas += amount;
   state.totalSouls += amount;
+  if (!state.stats) {
+    state.stats = { ritualClicks: 0, soulsFromClicks: 0, soulsFromProduction: 0 };
+  }
+  if (source === 'click') state.stats.soulsFromClicks += amount;
+  if (source === 'production') state.stats.soulsFromProduction += amount;
 }
 
 export function buyProducer(state, producerId, amount = 1) {

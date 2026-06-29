@@ -8,7 +8,7 @@ export function applyOfflineProgress(state, now = Date.now()) {
   const elapsedSeconds = Math.max(0, Math.min((now - lastSavedAt) / 1000, OFFLINE_LIMIT_SECONDS));
   if (elapsedSeconds < 5) return { gained: 0, seconds: elapsedSeconds };
   const gained = productionPerSecond(state, lastSavedAt) * elapsedSeconds;
-  addSouls(state, gained);
+  addSouls(state, gained, 'production');
   state.lastSavedAt = now;
   return { gained, seconds: elapsedSeconds };
 }

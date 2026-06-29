@@ -71,25 +71,16 @@ export function renderMainHordeDock(state) {
   if (!target) return;
   const { breakdown, totalMonsters, totalProduction, topProducer } = hordeTotals(state);
   const selected = relevantDockProducers(state, breakdown);
-  const signature = `${hordeSignature(breakdown, totalMonsters, totalProduction, topProducer, 'dock:')}|${selected.map(item => `${item.producer.id}:${item.nextCost.toFixed(2)}:${state.almas >= item.nextCost ? '1' : '0'}`).join('|')}`;
+  const best = selected[0];
+  const signature = `${hordeSignature(breakdown, totalMonsters, totalProduction, topProducer, 'dock-compact:')}|${best ? `${best.producer.id}:${best.nextCost.toFixed(2)}:${state.almas >= best.nextCost ? '1' : '0'}` : 'none'}`;
   if (signature === lastMainHordeDockSignature) return;
   lastMainHordeDockSignature = signature;
-  const byId = new Map(breakdown.map(item => [item.id, item]));
-  const cards = selected.map(({ producer }) => {
-    const item = byId.get(producer.id);
-    const quantity = item?.quantity || 0;
-    const total = item?.totalProduction || 0;
-    const cost1 = producerBulkCost(producer, state, 1);
-    const cost10 = producerBulkCost(producer, state, 10);
-    const affordable = state.almas >= cost1;
-    return `<article class="dock-producer ${affordable ? 'is-affordable' : ''}">
-      <div class="dock-producer-main"><strong>${producer.name}</strong><span>${formatNumber(quantity)} un.</span></div>
-      <div class="dock-producer-meta"><span>${formatNumber(total)}/s</span><span>Próx. ${formatNumber(cost1)}</span></div>
-      <div class="dock-actions"><button type="button" data-buy-producer="${producer.id}" data-buy-amount="1">x1<span>${formatNumber(cost1)}</span></button><button type="button" data-buy-producer="${producer.id}" data-buy-amount="10">x10<span>${formatNumber(cost10)}</span></button><button type="button" data-buy-max="${producer.id}">Máx.</button></div>
-    </article>`;
-  }).join('');
+  const actions = best ? [
+    `<button type="button" data-buy-producer="${best.producer.id}" data-buy-amount="1"><span class="button-label">Comprar x1 ${best.producer.name}</span><span class="button-cost">${formatNumber(producerBulkCost(best.producer, state, 1))} Almas</span></button>`,
+    `<button type="button" data-buy-producer="${best.producer.id}" data-buy-amount="10"><span class="button-label">Comprar x10 ${best.producer.name}</span><span class="button-cost">${formatNumber(producerBulkCost(best.producer, state, 10))} Almas</span></button>`
+  ].join('') : '';
 
-  target.innerHTML = `<div class="dock-header"><div><span>Cockpit da Horda</span><strong>${formatNumber(totalMonsters)} monstros · ${formatNumber(totalProduction)}/s</strong></div><em>Maior: ${topProducer.totalProduction > 0 ? topProducer.name : 'Nenhum'}</em></div><div class="dock-producer-grid">${cards}</div>`;
+  target.innerHTML = `<div class="dock-header"><div><span>Resumo da Horda</span><strong>${formatNumber(totalMonsters)} monstros · ${formatNumber(totalProduction)}/s</strong></div><em>Maior: ${topProducer.totalProduction > 0 ? topProducer.name : 'Nenhum'}</em></div><div class="dock-actions compact-dock-actions">${actions}<button type="button" data-open-tab="monsters"><span class="button-label">Abrir Loja</span></button></div>`;
 }
 
 export function showMessage(text) {
@@ -241,6 +232,43 @@ export function updateStatistics(state) {
   $('totalClicksDisplay').textContent = formatNumber(state.totalClicks);
   $('totalProducersDisplay').textContent = Object.values(state.producers).reduce((a, b) => a + b, 0);
   $('totalUpgradesDisplay').textContent = state.upgrades.length + state.milestoneUpgrades.length;
+  renderDetailedStatistics(state);
+}
+
+function renderDetailedStatistics(state) {
+  const ritualTarget = $('ritualStats');
+  const hordeTarget = $('hordeProductionStats');
+  const achievementTarget = $('visualAchievementStats');
+  if (!ritualTarget || !hordeTarget || !achievementTarget) return;
+
+  const stats = state.stats || {};
+  const clickSouls = Number(stats.soulsFromClicks || 0);
+  const productionSouls = Number(stats.soulsFromProduction || 0);
+  const totalTracked = clickSouls + productionSouls;
+  const clickShare = totalTracked > 0 ? (clickSouls / totalTracked) * 100 : 0;
+  ritualTarget.innerHTML = `<h3>Cliques do Ritual</h3><div class="statistics-detail-grid">
+    <article><span>Cliques reais</span><strong>${formatNumber(stats.ritualClicks || state.totalClicks || 0)}</strong></article>
+    <article><span>Almas por clique</span><strong>${formatNumber(clickSouls)}</strong></article>
+    <article><span>Almas por produção</span><strong>${formatNumber(productionSouls)}</strong></article>
+    <article><span>Participação dos cliques</span><strong>${formatNumber(clickShare)}%</strong></article>
+  </div>`;
+
+  const breakdown = producerProductionBreakdown(state);
+  const totalProduction = breakdown.reduce((total, producer) => total + producer.totalProduction, 0);
+  const rows = breakdown.map(producer => {
+    const share = productionShare(totalProduction, producer.totalProduction);
+    return `<div class="production-row">
+      <div class="production-row-main"><strong>${producer.name}</strong><span>${formatNumber(producer.quantity)} un.</span></div>
+      <div class="production-row-output"><span>${formatNumber(producer.totalProduction)}/s</span><span>${formatNumber(share)}%</span></div>
+      <div class="production-bar"><span style="--production-share:${share}%"></span></div>
+    </div>`;
+  }).join('');
+  hordeTarget.innerHTML = `<h3>Produção da Horda</h3><div class="production-breakdown">${rows}</div>`;
+
+  achievementTarget.innerHTML = `<h3>Conquistas Visuais</h3><div class="visual-achievement-grid">
+    <span>Unidos pela Guerra</span><span>O Selo Desperta</span><span>Mãos Manchadas</span>
+    <span>Primeira Queda</span><span>Legião</span><span>Céu Tomado</span>
+  </div>`;
 }
 
 export function render(state) {

@@ -36,6 +36,7 @@ function handleReachedMilestones() {
   const reached = newlyReachedMilestones(state);
   for (const milestone of reached) {
     markMilestoneSeen(state, milestone.id);
+    showMessage(`Marco alcançado: ${milestone.milestone}. ${milestone.name} foi desbloqueado.`);
     spawnSoulBurst();
   }
   return reached.length > 0;
@@ -71,9 +72,8 @@ function flashPurchasedCard(selector) {
 
 $('ritualButton').addEventListener('click', event => {
   const gained = clickPower(state);
-  addSouls(state, gained, 'click');
+  addSouls(state, gained);
   state.totalClicks += 1;
-  state.stats.ritualClicks += 1;
   document.body.classList.add('ritual-shock');
   $('ritualButton').classList.add('clicked');
   spawnFloatingText(`+${formatNumber(gained)} Alma`, event.clientX, event.clientY);
@@ -90,25 +90,15 @@ $('ritualButton').addEventListener('click', event => {
   });
 });
 
-function openTab(tabId) {
-  const panel = $(tabId);
-  const button = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
-  if (!panel || !button) return;
-  document.querySelectorAll('.tab-button,.tab-panel').forEach(element => element.classList.remove('active'));
-  button.classList.add('active');
-  panel.classList.add('active');
-}
-
 document.querySelectorAll('.tab-button').forEach(button => {
-  button.addEventListener('click', () => openTab(button.dataset.tab));
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button,.tab-panel').forEach(element => element.classList.remove('active'));
+    button.classList.add('active');
+    $(button.dataset.tab).classList.add('active');
+  });
 });
 
 document.addEventListener('click', event => {
-  const tabTrigger = event.target.closest('[data-open-tab]');
-  if (tabTrigger) {
-    openTab(tabTrigger.dataset.openTab);
-    return;
-  }
   const action = event.target.closest('[data-buy-producer], [data-buy-max], [data-buy-upgrade], [data-buy-milestone-upgrade]');
   if (!action) return;
   const producerId = action.dataset.buyProducer;
@@ -118,17 +108,17 @@ document.addEventListener('click', event => {
   const milestoneUpgradeId = action.dataset.buyMilestoneUpgrade;
   if (producerId) {
     const bought = buyProducer(state, producerId, buyAmount);
-    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange(null, { producersChanged: true }); pulseStageUnit(producerId); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); emitPurchase({ type: 'producer', id: producerId }); }
+    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange('Produtor invocado. A presença dele agora aparece no cenário.', { producersChanged: true }); pulseStageUnit(producerId); flashPurchasedCard(`[data-buy-producer="${producerId}"]`); emitPurchase({ type: 'producer', id: producerId }); }
   }
   if (maxProducerId) {
     const bought = buyMaxProducer(state, maxProducerId);
-    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange(null, { producersChanged: true }); pulseStageUnit(maxProducerId); flashPurchasedCard(`[data-buy-max="${maxProducerId}"]`); emitPurchase({ type: 'producer', id: maxProducerId }); }
+    if (bought) { spawnSoulBurst(); refreshAfterStructuralChange(`${bought} produtor(es) invocado(s).`, { producersChanged: true }); pulseStageUnit(maxProducerId); flashPurchasedCard(`[data-buy-max="${maxProducerId}"]`); emitPurchase({ type: 'producer', id: maxProducerId }); }
   }
   if (upgradeId) {
-    if (buyUpgrade(state, upgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange(null); flashPurchasedCard(`[data-buy-upgrade="${upgradeId}"]`); emitPurchase({ type: 'upgrade', id: upgradeId }); }
+    if (buyUpgrade(state, upgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange('Upgrade comprado e aplicado ao ritual.'); flashPurchasedCard(`[data-buy-upgrade="${upgradeId}"]`); emitPurchase({ type: 'upgrade', id: upgradeId }); }
   }
   if (milestoneUpgradeId) {
-    if (buyMilestoneUpgrade(state, milestoneUpgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange(null); flashPurchasedCard(`[data-buy-milestone-upgrade="${milestoneUpgradeId}"]`); emitPurchase({ type: 'milestoneUpgrade', id: milestoneUpgradeId }); }
+    if (buyMilestoneUpgrade(state, milestoneUpgradeId)) { spawnSoulBurst(); refreshAfterStructuralChange('Upgrade de Marco comprado. A horda ficou mais forte.'); flashPurchasedCard(`[data-buy-milestone-upgrade="${milestoneUpgradeId}"]`); emitPurchase({ type: 'milestoneUpgrade', id: milestoneUpgradeId }); }
   }
 });
 
@@ -396,7 +386,7 @@ async function beginHeroSoul(hero) {
 function loop(now) {
   const delta = Math.min((now - lastFrame) / 1000, 1);
   lastFrame = now;
-  addSouls(state, productionPerSecond(state) * delta, 'production');
+  addSouls(state, productionPerSecond(state) * delta);
   eventAccumulator += delta;
   if (now >= nextHeroSpawnAt) {
     trySpawnHero();

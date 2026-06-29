@@ -13,6 +13,11 @@ export function createDefaultState() {
     seenMilestones: [],
     totalSouls: 0,
     totalClicks: 0,
+    stats: {
+      ritualClicks: 0,
+      soulsFromClicks: 0,
+      soulsFromProduction: 0
+    },
     bloodMoonUntil: 0,
     lastSavedAt: Date.now()
   };
@@ -28,6 +33,10 @@ export function normalizeState(raw) {
     producers: { ...base.producers, ...(raw.producers || {}) },
     upgrades: Array.isArray(raw.upgrades) ? raw.upgrades : [],
     milestoneUpgrades: Array.isArray(raw.milestoneUpgrades) ? raw.milestoneUpgrades : [],
-    seenMilestones: Array.isArray(raw.seenMilestones) ? raw.seenMilestones : []
+    seenMilestones: Array.isArray(raw.seenMilestones) ? raw.seenMilestones : [],
+    stats: {
+      ...base.stats,
+      ...(raw.stats && typeof raw.stats === 'object' ? raw.stats : {})
+    }
   };
 }
